@@ -2,3 +2,11 @@ docs/
 AGENTS.md
 .agent/
 .env
+.env.local
+node_modules
+*.db
+*.db-shm
+*.db-wal
+.next
+dist
+lib/db/migrations
