@@ -1,6 +1,11 @@
 import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
-import { db } from "./index";
-import { books, readingProgress, journalNotes, ReadingStatus } from "../schema";
+import { db } from "@/lib/db";
+import {
+  books,
+  readingProgress,
+  journalNotes,
+  ReadingStatus,
+} from "@/lib/db/schema";
 
 export type Book = typeof books.$inferSelect;
 export type NewBook = typeof books.$inferInsert;
@@ -23,7 +28,8 @@ export const bookRepository = {
   /**
    * Returns a specific book by its ISBN.
    */
-  findByIsbn: (isbn: string) => db.select().from(books).where(eq(books.isbn, isbn)),
+  findByIsbn: (isbn: string) =>
+    db.select().from(books).where(eq(books.isbn, isbn)),
 
   /**
    * Creates a new book in the database.
@@ -34,7 +40,11 @@ export const bookRepository = {
    * Updates an existing book in the database.
    */
   update: (id: number, data: Partial<NewBook>) =>
-    db.update(books).set({ ...data, updatedAt: sql`unixepoch()` }).where(eq(books.id, id)).returning(),
+    db
+      .update(books)
+      .set({ ...data, updatedAt: sql`unixepoch()` })
+      .where(eq(books.id, id))
+      .returning(),
 
   /**
    * Deletes a book from the database.
@@ -45,28 +55,44 @@ export const bookRepository = {
    * Updates the reading status of a book.
    */
   updateStatus: (id: number, status: ReadingStatus) =>
-    db.update(books).set({ readingStatus: status, updatedAt: sql`unixepoch()` }).where(eq(books.id, id)).returning(),
+    db
+      .update(books)
+      .set({ readingStatus: status, updatedAt: sql`unixepoch()` })
+      .where(eq(books.id, id))
+      .returning(),
 
   /**
    * Updates the current page of a book.
    */
   updateProgress: (id: number, currentPage: number) =>
-    db.update(books).set({ currentPage, updatedAt: sql`unixepoch()` }).where(eq(books.id, id)).returning(),
+    db
+      .update(books)
+      .set({ currentPage, updatedAt: sql`unixepoch()` })
+      .where(eq(books.id, id))
+      .returning(),
 
   /**
    * Updates the cover of a book.
    */
-  updateCover: (id: number, coverData: { url?: string; path?: string; hash?: string }) =>
-    db.update(books).set({
-      coverImageUrl: coverData.url,
-      coverImagePath: coverData.path,
-      coverImageHash: coverData.hash,
-    }).where(eq(books.id, id)).returning(),
+  updateCover: (
+    id: number,
+    coverData: { url?: string; path?: string; hash?: string },
+  ) =>
+    db
+      .update(books)
+      .set({
+        coverImageUrl: coverData.url,
+        coverImagePath: coverData.path,
+        coverImageHash: coverData.hash,
+      })
+      .where(eq(books.id, id))
+      .returning(),
 
-    /**
+  /**
    * Returns all books that are visible to the public.
    */
-  findVisible: () => db.select().from(books).where(eq(books.isVisiblePublicly, true)),
+  findVisible: () =>
+    db.select().from(books).where(eq(books.isVisiblePublicly, true)),
 
   /**
    * Searches for books by title or author.
@@ -75,7 +101,9 @@ export const bookRepository = {
     db
       .select()
       .from(books)
-      .where(sql`${books.title} LIKE ${"%" + query + "%"} OR ${books.author} LIKE ${"%" + query + "%"}`),
+      .where(
+        sql`${books.title} LIKE ${"%" + query + "%"} OR ${books.author} LIKE ${"%" + query + "%"}`,
+      ),
 };
 
 export const readingProgressRepository = {
@@ -83,7 +111,11 @@ export const readingProgressRepository = {
    * Returns all reading progress entries for a specific book, ordered by date (newest first).
    */
   findByBook: (bookId: number) =>
-    db.select().from(readingProgress).where(eq(readingProgress.bookId, bookId)).orderBy(desc(readingProgress.date)),
+    db
+      .select()
+      .from(readingProgress)
+      .where(eq(readingProgress.bookId, bookId))
+      .orderBy(desc(readingProgress.date)),
 
   /**
    * Returns all reading progress entries for a specific book within a date range, ordered by date (newest first).
@@ -92,13 +124,20 @@ export const readingProgressRepository = {
     db
       .select()
       .from(readingProgress)
-      .where(and(eq(readingProgress.bookId, bookId), gte(readingProgress.date, startDate), lte(readingProgress.date, endDate)))
+      .where(
+        and(
+          eq(readingProgress.bookId, bookId),
+          gte(readingProgress.date, startDate),
+          lte(readingProgress.date, endDate),
+        ),
+      )
       .orderBy(desc(readingProgress.date)),
 
   /**
    * Creates a new reading progress entry.
    */
-  create: (data: NewReadingProgress) => db.insert(readingProgress).values(data).returning(),
+  create: (data: NewReadingProgress) =>
+    db.insert(readingProgress).values(data).returning(),
 
   /**
    * Returns the total pages read, total minutes, and session count for a specific book.
@@ -106,8 +145,13 @@ export const readingProgressRepository = {
   getTotalsByBook: (bookId: number) =>
     db
       .select({
-        totalPagesRead: sql<number>`sum(${readingProgress.pagesRead})`.as("totalPagesRead"),
-        totalMinutes: sql<number>`sum(${readingProgress.readingDurationMinutes})`.as("totalMinutes"),
+        totalPagesRead: sql<number>`sum(${readingProgress.pagesRead})`.as(
+          "totalPagesRead",
+        ),
+        totalMinutes:
+          sql<number>`sum(${readingProgress.readingDurationMinutes})`.as(
+            "totalMinutes",
+          ),
         sessionsCount: sql<number>`count(*)`.as("sessionsCount"),
       })
       .from(readingProgress)
@@ -119,26 +163,40 @@ export const journalNotesRepository = {
    * Returns all journal notes for a specific book, ordered by page number.
    */
   findByBook: (bookId: number) =>
-    db.select().from(journalNotes).where(eq(journalNotes.bookId, bookId)).orderBy(journalNotes.pageNumber),
+    db
+      .select()
+      .from(journalNotes)
+      .where(eq(journalNotes.bookId, bookId))
+      .orderBy(journalNotes.pageNumber),
 
   /**
    * Creates a new journal note.
    */
-  create: (data: NewJournalNote) => db.insert(journalNotes).values(data).returning(),
+  create: (data: NewJournalNote) =>
+    db.insert(journalNotes).values(data).returning(),
 
   /**
    * Updates an existing journal note.
    */
   update: (id: number, data: Partial<NewJournalNote>) =>
-    db.update(journalNotes).set({ ...data, updatedAt: sql`unixepoch()` }).where(eq(journalNotes.id, id)).returning(),
+    db
+      .update(journalNotes)
+      .set({ ...data, updatedAt: sql`unixepoch()` })
+      .where(eq(journalNotes.id, id))
+      .returning(),
 
   /**
    * Deletes a journal note.
    */
-  delete: (id: number) => db.delete(journalNotes).where(eq(journalNotes.id, id)).returning(),
+  delete: (id: number) =>
+    db.delete(journalNotes).where(eq(journalNotes.id, id)).returning(),
 
   /**
    * Returns all journal notes that are visible to the public.
    */
-  findVisible: () => db.select().from(journalNotes).where(eq(journalNotes.isVisiblePublicly, true)),
+  findVisible: () =>
+    db
+      .select()
+      .from(journalNotes)
+      .where(eq(journalNotes.isVisiblePublicly, true)),
 };

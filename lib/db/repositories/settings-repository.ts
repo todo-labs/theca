@@ -1,6 +1,6 @@
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
-import { db } from "./index";
-import { settings, sessions, SettingCategory } from "../schema";
+import { db } from "@/lib/db";
+import { settings, sessions, SettingCategory } from "@/lib/db/schema";
 
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
@@ -16,7 +16,8 @@ export const settingsRepository = {
   /**
    * Returns a specific setting by key.
    */
-  findByKey: (key: string) => db.select().from(settings).where(eq(settings.key, key)),
+  findByKey: (key: string) =>
+    db.select().from(settings).where(eq(settings.key, key)),
 
   /**
    * Returns a specific setting by key.
@@ -32,23 +33,43 @@ export const settingsRepository = {
   /**
    * Sets a specific setting by key.
    */
-  set: (key: string, value: string, category: SettingCategory = "preferences", valueType: "string" | "number" | "boolean" | "json" = "string", description?: string) =>
+  set: (
+    key: string,
+    value: string,
+    category: SettingCategory = "preferences",
+    valueType: "string" | "number" | "boolean" | "json" = "string",
+    description?: string,
+  ) =>
     db
       .insert(settings)
       .values({ key, value, category, valueType, description })
-      .onConflictDoUpdate({ target: settings.key, set: { value, category, valueType, description, updatedAt: sql`unixepoch()` } })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: {
+          value,
+          category,
+          valueType,
+          description,
+          updatedAt: sql`unixepoch()`,
+        },
+      })
       .returning(),
 
   /**
    * Deletes a specific setting by key.
    */
-  delete: (key: string) => db.delete(settings).where(eq(settings.key, key)).returning(),
+  delete: (key: string) =>
+    db.delete(settings).where(eq(settings.key, key)).returning(),
 
   /**
    * Gets a boolean value for a specific setting by key.
    */
   getBoolean: async (key: string): Promise<boolean> => {
-    const result = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+    const result = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, key))
+      .limit(1);
     return result[0]?.value === "true";
   },
 
@@ -56,7 +77,11 @@ export const settingsRepository = {
    * Gets a number value for a specific setting by key.
    */
   getNumber: async (key: string): Promise<number> => {
-    const result = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+    const result = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, key))
+      .limit(1);
     return parseInt(result[0]?.value || "0", 10);
   },
 
@@ -64,7 +89,11 @@ export const settingsRepository = {
    * Gets a JSON value for a specific setting by key.
    */
   getJson: async (key: string): Promise<any> => {
-    const result = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+    const result = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, key))
+      .limit(1);
     return result[0]?.value ? JSON.parse(result[0].value) : null;
   },
 };
@@ -78,7 +107,8 @@ export const sessionsRepository = {
   /**
    * Returns a specific session by token.
    */
-  findByToken: (token: string) => db.select().from(sessions).where(eq(sessions.token, token)).limit(1),
+  findByToken: (token: string) =>
+    db.select().from(sessions).where(eq(sessions.token, token)).limit(1),
 
   /**
    * Creates a new session.
@@ -93,25 +123,38 @@ export const sessionsRepository = {
     db
       .select()
       .from(sessions)
-      .where(and(eq(sessions.token, token), gte(sessions.expiresAt, sql`unixepoch()`)))
+      .where(
+        and(
+          eq(sessions.token, token),
+          gte(sessions.expiresAt, sql`unixepoch()`),
+        ),
+      )
       .limit(1),
 
   /**
    * Updates the last active time for a specific session by token.
    */
   updateLastActive: (token: string) =>
-    db.update(sessions).set({ lastActive: sql`unixepoch()` }).where(eq(sessions.token, token)).returning(),
+    db
+      .update(sessions)
+      .set({ lastActive: sql`unixepoch()` })
+      .where(eq(sessions.token, token))
+      .returning(),
 
   /**
    * Deletes a specific session by token.
    */
-  delete: (token: string) => db.delete(sessions).where(eq(sessions.token, token)).returning(),
+  delete: (token: string) =>
+    db.delete(sessions).where(eq(sessions.token, token)).returning(),
 
   /**
    * Deletes all expired sessions.
    */
   deleteExpired: () =>
-    db.delete(sessions).where(lte(sessions.expiresAt, sql`unixepoch()`)).returning(),
+    db
+      .delete(sessions)
+      .where(lte(sessions.expiresAt, sql`unixepoch()`))
+      .returning(),
 
   /**
    * Deletes all sessions.

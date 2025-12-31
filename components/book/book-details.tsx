@@ -1,17 +1,22 @@
-import { BookMetadata } from "./book-metadata"
+import { BookMetadata } from "@/components/book/book-metadata";
 
 interface BookDetailsProps {
-  title: React.ReactNode
-  author: string
-  description: React.ReactNode
+  title: React.ReactNode;
+  author: string;
+  description: React.ReactNode;
   metadata: {
-    label: string
-    value: string
-    minWidth?: string
-  }[]
+    label: string;
+    value: string;
+    minWidth?: string;
+  }[];
 }
 
-export function BookDetails({ title, author, description, metadata }: BookDetailsProps) {
+export function BookDetails({
+  title,
+  author,
+  description,
+  metadata,
+}: BookDetailsProps) {
   return (
     <section className="flex flex-col justify-center px-10 py-12 lg:px-14 xl:px-16">
       <div className="space-y-8 max-w-md">
@@ -33,5 +38,5 @@ export function BookDetails({ title, author, description, metadata }: BookDetail
         <BookMetadata items={metadata} />
       </div>
     </section>
-  )
+  );
 }
