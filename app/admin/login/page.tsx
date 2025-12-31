@@ -1,17 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Lock } from "lucide-react";
+import { toast } from "sonner";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock } from "lucide-react";
-import { toast } from "sonner";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { isAuthenticated, setAuthenticated } = useAuthStore();
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth");
+        const data = await response.json();
+        if (data.isAuthenticated) {
+          setAuthenticated(true);
+          router.push("/admin");
+        }
+      } catch (error) {
+        // Not authenticated, stay on login page
+      }
+    };
+    if (isAuthenticated) {
+      router.push("/admin");
+    } else {
+      checkAuth();
+    }
+  }, [isAuthenticated, router, setAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
