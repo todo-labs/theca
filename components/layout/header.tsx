@@ -9,7 +9,7 @@ export function Header() {
           <span className="text-[11px] font-bold tracking-[0.25em] uppercase">theca</span>
         </div>
         <nav className="hidden md:block">
-          <span className="text-[11px] font-medium tracking-wide text-muted-foreground/70">Book Listing</span>
+          <span className="text-[11px] font-medium tracking-wide text-muted-foreground/70">Library Management Software</span>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />

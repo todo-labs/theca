@@ -1,28 +1,47 @@
 import { SidebarItem } from "./sidebar-item"
+import { useEffect } from "react"
 
-interface SidebarProps {
-  activeBook: {
-    src: string
-    alt: string
-  }
-  suggestedBooks: {
-    src: string
-    alt: string
-  }[]
+interface Book {
+  id: string
+  coverSrc: string
+  coverAlt: string
 }
 
-export function Sidebar({ activeBook, suggestedBooks }: SidebarProps) {
-  return (
-    <section className="relative hidden lg:flex flex-col justify-start w-[180px] xl:w-[200px] bg-background">
-      <div className="flex flex-col items-center gap-8 py-12 px-8 relative">
-        {/* Active Item Indicator Line - positioned on the left */}
-        <div className="absolute left-0 top-[60px] h-[140px] w-[3px] bg-primary/80" />
-        
-        <SidebarItem {...activeBook} isActive />
+interface SidebarProps {
+  books: Book[]
+  selectedIndex: number
+  onSelectBook: (index: number) => void
+  itemsRef: React.MutableRefObject<(HTMLDivElement | null)[]>
+}
 
-        {/* Other Items */}
-        {suggestedBooks.map((book, i) => (
-          <SidebarItem key={i} {...book} />
+export function Sidebar({ books, selectedIndex, onSelectBook, itemsRef }: SidebarProps) {
+  useEffect(() => {
+    const selectedItem = itemsRef.current[selectedIndex]
+    if (selectedItem) {
+      selectedItem.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center"
+      })
+    }
+  }, [selectedIndex, itemsRef])
+
+  return (
+    <section className="relative hidden lg:flex flex-col justify-start w-[180px] xl:w-[210px] bg-background border-l border-border/30">
+      <div className="flex flex-col items-center gap-12 py-12 pl-8 pr-12 relative overflow-y-auto flex-1 custom-scrollbar">
+        {books.map((book, index) => (
+          <div
+            key={book.id}
+            ref={(el) => { itemsRef.current[index] = el }}
+            className="w-full flex justify-center"
+          >
+            <SidebarItem
+              src={book.coverSrc}
+              alt={book.coverAlt}
+              isActive={index === selectedIndex}
+              onClick={() => onSelectBook(index)}
+            />
+          </div>
         ))}
       </div>
     </section>

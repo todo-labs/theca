@@ -1,5 +1,4 @@
 import { BookMetadata } from "./book-metadata"
-import { BookReviewer } from "./book-reviewer"
 
 interface BookDetailsProps {
   title: React.ReactNode
@@ -10,15 +9,9 @@ interface BookDetailsProps {
     value: string
     minWidth?: string
   }[]
-  reviewer: {
-    name: string
-    avatarSrc: string
-    initials: string
-    quote: string
-  }
 }
 
-export function BookDetails({ title, author, description, metadata, reviewer }: BookDetailsProps) {
+export function BookDetails({ title, author, description, metadata }: BookDetailsProps) {
   return (
     <section className="flex flex-col justify-center px-10 py-12 lg:px-14 xl:px-16">
       <div className="space-y-8 max-w-md">
@@ -38,10 +31,6 @@ export function BookDetails({ title, author, description, metadata, reviewer }: 
         <div className="border-t border-border/30 my-6" />
 
         <BookMetadata items={metadata} />
-
-        <div className="border-t border-border/30 my-6" />
-
-        <BookReviewer {...reviewer} />
       </div>
     </section>
   )

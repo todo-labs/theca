@@ -13,9 +13,9 @@ export function BookCover({ src, alt }: BookCoverProps) {
           <Image
             src={src}
             alt={alt}
-            width={320}
-            height={480}
-            className="h-auto w-[280px] lg:w-[320px] object-cover"
+            width={420}
+            height={630}
+            className="h-auto w-[320px] lg:w-[420px] object-cover"
             priority
           />
         </div>
