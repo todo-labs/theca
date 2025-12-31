@@ -1,6 +1,6 @@
 import { eq, desc, sql } from "drizzle-orm";
 import { db } from "./index";
-import { aiRecommendations, userRecommendations } from "./schema";
+import { aiRecommendations, userRecommendations, RecommendationStatus } from "../schema";
 
 export type AiRecommendation = typeof aiRecommendations.$inferSelect;
 export type NewAiRecommendation = typeof aiRecommendations.$inferInsert;
@@ -53,11 +53,13 @@ export const aiRecommendationsRepository = {
   /**
    * Generates a new AI recommendation based on a list of book IDs.
    */
-  generateForBooks: (bookIds: number[]) =>
+  generateForBooks: (bookIds: number[], modelId: string) =>
     db
       .insert(aiRecommendations)
       .values({
-        basedOn: bookIds,
+        title: "AI Recommendation",
+        modelId,
+        basedOn: bookIds.map(id => ({ bookId: id })),
       })
       .returning(),
 };
@@ -97,7 +99,7 @@ export const userRecommendationsRepository = {
   /**
    * Updates the status of a user recommendation.
    */
-  updateStatus: (id: number, status: string) =>
+  updateStatus: (id: number, status: RecommendationStatus) =>
     db.update(userRecommendations).set({ status, reviewedAt: sql`unixepoch()` }).where(eq(userRecommendations.id, id)).returning(),
  
   /**

@@ -1,3 +1,4 @@
+export { db } from "../index";
 export { 
   bookRepository, 
   readingProgressRepository, 

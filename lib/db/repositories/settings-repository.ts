@@ -1,6 +1,6 @@
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 import { db } from "./index";
-import { settings, sessions } from "./schema";
+import { settings, sessions, SettingCategory } from "../schema";
 
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
@@ -24,13 +24,19 @@ export const settingsRepository = {
   get: (key: string) => db.select().from(settings).where(eq(settings.key, key)),
 
   /**
+   * Returns settings by category.
+   */
+  findByCategory: (category: SettingCategory) =>
+    db.select().from(settings).where(eq(settings.category, category)),
+
+  /**
    * Sets a specific setting by key.
    */
-  set: (key: string, value: string, valueType: string = "string", description?: string) =>
+  set: (key: string, value: string, category: SettingCategory = "preferences", valueType: "string" | "number" | "boolean" | "json" = "string", description?: string) =>
     db
       .insert(settings)
-      .values({ key, value, valueType, description })
-      .onConflictDoUpdate({ target: settings.key, set: { value, valueType, description, updatedAt: sql`unixepoch()` } })
+      .values({ key, value, category, valueType, description })
+      .onConflictDoUpdate({ target: settings.key, set: { value, category, valueType, description, updatedAt: sql`unixepoch()` } })
       .returning(),
 
   /**

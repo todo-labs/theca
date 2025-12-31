@@ -1,6 +1,6 @@
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 import { db } from "./index";
-import { readingGoals, readingStreaks } from "./schema";
+import { readingGoals, readingStreaks, GoalType } from "../schema";
 
 export type ReadingGoal = typeof readingGoals.$inferSelect;
 export type NewReadingGoal = typeof readingGoals.$inferInsert;
@@ -21,7 +21,7 @@ export const readingGoalsRepository = {
   /**
    * Returns all reading goals of a specific type, ordered by creation date (newest first).
    */
-  findByType: (goalType: string) =>
+  findByType: (goalType: GoalType) =>
     db.select().from(readingGoals).where(eq(readingGoals.goalType, goalType)).orderBy(desc(readingGoals.createdAt)),
 
   /**

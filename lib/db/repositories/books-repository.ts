@@ -1,6 +1,6 @@
 import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
 import { db } from "./index";
-import { books, readingProgress, journalNotes } from "./schema";
+import { books, readingProgress, journalNotes, ReadingStatus } from "../schema";
 
 export type Book = typeof books.$inferSelect;
 export type NewBook = typeof books.$inferInsert;
@@ -44,7 +44,7 @@ export const bookRepository = {
   /**
    * Updates the reading status of a book.
    */
-  updateStatus: (id: number, status: string) =>
+  updateStatus: (id: number, status: ReadingStatus) =>
     db.update(books).set({ readingStatus: status, updatedAt: sql`unixepoch()` }).where(eq(books.id, id)).returning(),
 
   /**
@@ -57,7 +57,11 @@ export const bookRepository = {
    * Updates the cover of a book.
    */
   updateCover: (id: number, coverData: { url?: string; path?: string; hash?: string }) =>
-    db.update(books).set(coverData).where(eq(books.id, id)).returning(),
+    db.update(books).set({
+      coverImageUrl: coverData.url,
+      coverImagePath: coverData.path,
+      coverImageHash: coverData.hash,
+    }).where(eq(books.id, id)).returning(),
 
     /**
    * Returns all books that are visible to the public.
