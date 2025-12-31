@@ -2,7 +2,7 @@
 
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function AdminLayout({
   children,
@@ -11,8 +11,12 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, setAuthenticated } = useAuthStore();
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
+    if (isLoginPage) return;
+
     const checkAuth = async () => {
       try {
         const response = await fetch("/api/auth");
@@ -30,12 +34,16 @@ export default function AdminLayout({
     checkAuth();
   }, [router, setAuthenticated]);
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isLoginPage) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
+  }
+
+  if (isLoginPage) {
+    return <>{children}</>;
   }
 
   return (
