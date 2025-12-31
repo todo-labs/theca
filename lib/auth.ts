@@ -1,20 +1,20 @@
-import otplib from "otplib";
+import { authenticator } from "otplib";
+import { eq, lte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { sessions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 
-otplib.authenticator.options = {
+authenticator.options = {
   step: 30,
   window: 1,
 };
 
-export function verifyTOTP(token: string, secret: string): boolean {
+export function verifyTOTP(token: string): boolean {
   if (!process.env.TOTP_SECRET) {
     throw new Error("TOTP_SECRET not configured");
   }
 
   try {
-    return otplib.authenticator.verify({
+    return authenticator.verify({
       token,
       secret: process.env.TOTP_SECRET,
     });
@@ -35,7 +35,7 @@ export async function createSession() {
     .values({
       token: sessionToken,
       expiresAt,
-      lastActiveAt: new Date(),
+      lastActive: new Date(),
     })
     .returning();
 
@@ -56,7 +56,7 @@ export async function verifySession(token: string) {
 
   await db
     .update(sessions)
-    .set({ lastActiveAt: new Date() })
+    .set({ lastActive: new Date() })
     .where(eq(sessions.token, token));
 
   return true;
@@ -69,5 +69,5 @@ export async function deleteSession(token: string) {
 export async function cleanupExpiredSessions() {
   await db
     .delete(sessions)
-    .where(eq(sessions.expiresAt, new Date()));
+    .where(lte(sessions.expiresAt, new Date()));
 }

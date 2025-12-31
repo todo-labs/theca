@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyTOTP, createSession, deleteSession } from "@/lib/auth";
-import { verifySession } from "@/lib/middleware";
+import { verifyTOTP } from "@/lib/auth";
+import { createSession, verifySession } from "@/lib/middleware";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isValid = verifyTOTP(token, process.env.TOTP_SECRET || "");
+    const isValid = verifyTOTP(token);
 
     if (!isValid) {
       return NextResponse.json(
@@ -22,14 +22,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const session = await createSession();
+    const sessionToken = await createSession();
 
     const response = NextResponse.json({ success: true });
-    response.cookies.set("session_token", session.token, {
+    response.cookies.set("session_token", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: parseInt(process.env.SESSION_TIMEOUT_HOURS || "24") * 60 * 60,
+      maxAge: 24 * 60 * 60, // 24 hours
     });
 
     return response;
@@ -60,12 +60,6 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const token = request.cookies.get("session_token")?.value;
-
-    if (token) {
-      await deleteSession(token);
-    }
-
     const response = NextResponse.json({ success: true });
     response.cookies.delete("session_token");
 

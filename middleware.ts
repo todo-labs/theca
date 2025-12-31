@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isAdminPath) {
+  if (isAdminPath && !pathname.startsWith("/admin/login")) {
     const auth = await requireAuth(request);
 
     if (!auth.isAuthenticated) {
