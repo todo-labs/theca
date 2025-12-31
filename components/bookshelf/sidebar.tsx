@@ -27,7 +27,7 @@ export function Sidebar({ books, selectedIndex, onSelectBook, itemsRef }: Sideba
   }, [selectedIndex, itemsRef])
 
   return (
-    <section className="relative hidden lg:flex flex-col justify-start w-[180px] xl:w-[210px] bg-background border-l border-border/30">
+    <section className="relative hidden lg:flex flex-col justify-start w-[180px] xl:w-[210px] bg-background border-l border-border/30 min-h-screen">
       <div className="flex flex-col items-center gap-12 py-12 pl-8 pr-12 relative overflow-y-auto flex-1 custom-scrollbar">
         {books.map((book, index) => (
           <div
