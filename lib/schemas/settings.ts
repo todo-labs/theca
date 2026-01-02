@@ -26,6 +26,7 @@ export const visibilityFormSchema = z.object({
   showProgressPublicly: z.boolean(),
   showGoalsPublicly: z.boolean(),
   defaultBookVisibility: z.enum(["public", "private"]),
+  recommendations_enabled: z.boolean(),
 })
 
 export type VisibilityFormValues = z.infer<typeof visibilityFormSchema>

@@ -17,9 +17,13 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 
 import { ProfileFormValues, profileFormSchema } from "@/lib/schemas/settings"
+import { useSettings, useUpdateSettings } from "@/hooks/queries/use-settings"
 import { useEffect } from "react"
 
 export function ProfileForm() {
+  const { data: settings, isLoading } = useSettings()
+  const updateSettings = useUpdateSettings()
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -29,43 +33,21 @@ export function ProfileForm() {
   })
 
   useEffect(() => {
-    async function loadSettings() {
-      try {
-        const response = await fetch("/api/settings")
-        const data = await response.json()
-        
-        const values: any = {}
-        Object.keys(profileFormSchema.shape).forEach(key => {
-          if (data[key] !== undefined) {
-            values[key] = data[key]
-          }
-        })
-        
-        if (Object.keys(values).length > 0) {
-          form.reset({ ...form.getValues(), ...values })
+    if (settings) {
+      const values: any = {}
+      Object.keys(profileFormSchema.shape).forEach(key => {
+        if (settings[key] !== undefined) {
+          values[key] = settings[key]
         }
-      } catch (error) {
-        console.error("Failed to load profile settings:", error)
+      })
+      if (Object.keys(values).length > 0) {
+        form.reset({ ...form.getValues(), ...values })
       }
     }
-    loadSettings()
-  }, [form])
+  }, [settings, form])
 
-  async function onSubmit(data: ProfileFormValues) {
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "profile", data }),
-      })
-
-      if (!response.ok) throw new Error("Failed to save settings")
-      
-      toast.success("Profile updated successfully")
-    } catch (error) {
-      toast.error("Failed to update profile")
-      console.error(error)
-    }
+  function onSubmit(data: ProfileFormValues) {
+    updateSettings.mutate({ category: "profile", data })
   }
 
   return (
@@ -108,8 +90,8 @@ export function ProfileForm() {
           </FieldGroup>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            Save Changes
+          <Button type="submit" disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </CardFooter>
       </form>

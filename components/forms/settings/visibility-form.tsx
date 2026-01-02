@@ -15,56 +15,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Checkbox } from "@/components/ui/checkbox"
 
 import { VisibilityFormValues, visibilityFormSchema } from "@/lib/schemas/settings"
+import { useSettings, useUpdateSettings } from "@/hooks/queries/use-settings"
 import { useEffect } from "react"
 
 export function VisibilityForm() {
+  const { data: settings } = useSettings()
+  const updateSettings = useUpdateSettings()
+
   const form = useForm<VisibilityFormValues>({
     resolver: zodResolver(visibilityFormSchema),
     defaultValues: {
       showProgressPublicly: false,
       showGoalsPublicly: false,
       defaultBookVisibility: "private",
+      recommendations_enabled: false,
     },
   })
 
   useEffect(() => {
-    async function loadSettings() {
-      try {
-        const response = await fetch("/api/settings")
-        const data = await response.json()
-        
-        const values: any = {}
-        Object.keys(visibilityFormSchema.shape).forEach(key => {
-          if (data[key] !== undefined) {
-            values[key] = data[key]
-          }
-        })
-        
-        if (Object.keys(values).length > 0) {
-          form.reset({ ...form.getValues(), ...values })
+    if (settings) {
+      const values: any = {}
+      Object.keys(visibilityFormSchema.shape).forEach(key => {
+        if (settings[key] !== undefined) {
+          values[key] = settings[key]
         }
-      } catch (error) {
-        console.error("Failed to load visibility settings:", error)
+      })
+      if (Object.keys(values).length > 0) {
+        form.reset({ ...form.getValues(), ...values })
       }
     }
-    loadSettings()
-  }, [form])
+  }, [settings, form])
 
   async function onSubmit(data: VisibilityFormValues) {
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "visibility", data }),
-      })
-
-      if (!response.ok) throw new Error("Failed to save settings")
-      
-      toast.success("Visibility settings updated")
-    } catch (error) {
-      toast.error("Failed to update visibility")
-      console.error(error)
-    }
+    updateSettings.mutate({ category: "visibility", data })
   }
 
   return (
@@ -106,6 +89,20 @@ export function VisibilityForm() {
               />
             </Field>
 
+            <Field orientation="horizontal">
+              <div className="flex flex-col gap-1.5 flex-1">
+                <FieldLabel htmlFor="recommendations_enabled">Public Recommendations</FieldLabel>
+                <FieldDescription>
+                  Allow visitors to suggest books for you to read.
+                </FieldDescription>
+              </div>
+              <Checkbox
+                id="recommendations_enabled"
+                checked={form.watch("recommendations_enabled")}
+                onCheckedChange={(checked) => form.setValue("recommendations_enabled", !!checked)}
+              />
+            </Field>
+
             <Field>
               <FieldLabel htmlFor="defaultBookVisibility">Default Book Visibility</FieldLabel>
               <select
@@ -123,8 +120,8 @@ export function VisibilityForm() {
           </FieldGroup>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            Save Visibility Settings
+          <Button type="submit" disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? "Saving..." : "Save Visibility Settings"}
           </Button>
         </CardFooter>
       </form>

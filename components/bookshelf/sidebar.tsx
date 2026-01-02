@@ -32,8 +32,8 @@ export function Sidebar({
   }, [selectedIndex, itemsRef]);
 
   return (
-    <section className="relative hidden lg:flex flex-col justify-start w-[180px] xl:w-[210px] bg-background border-l border-border/30 min-h-screen">
-      <div className="flex flex-col items-center gap-12 py-12 pl-8 pr-12 relative overflow-y-auto flex-1 custom-scrollbar">
+    <section className="relative hidden lg:flex flex-col justify-start w-[180px] xl:w-[210px] bg-background border-l border-border/30 h-[calc(100vh-64px)]">
+      <div className="flex flex-col items-center gap-12 py-12 pl-8 pr-12 relative overflow-y-auto flex-1 custom-scrollbar h-full">
         {books.map((book, index) => (
           <div
             key={book.id}

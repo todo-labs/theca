@@ -16,9 +16,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Checkbox } from "@/components/ui/checkbox"
 
 import { NotificationFormValues, notificationFormSchema } from "@/lib/schemas/settings"
+import { useSettings, useUpdateSettings } from "@/hooks/queries/use-settings"
 import { useEffect } from "react"
 
 export function NotificationForm() {
+  const { data: settings } = useSettings()
+  const updateSettings = useUpdateSettings()
+
   const form = useForm<NotificationFormValues>({
     resolver: zodResolver(notificationFormSchema),
     defaultValues: {
@@ -28,43 +32,21 @@ export function NotificationForm() {
   })
 
   useEffect(() => {
-    async function loadSettings() {
-      try {
-        const response = await fetch("/api/settings")
-        const data = await response.json()
-        
-        const values: any = {}
-        Object.keys(notificationFormSchema.shape).forEach(key => {
-          if (data[key] !== undefined) {
-            values[key] = data[key]
-          }
-        })
-        
-        if (Object.keys(values).length > 0) {
-          form.reset({ ...form.getValues(), ...values })
+    if (settings) {
+      const values: any = {}
+      Object.keys(notificationFormSchema.shape).forEach(key => {
+        if (settings[key] !== undefined) {
+          values[key] = settings[key]
         }
-      } catch (error) {
-        console.error("Failed to load notification settings:", error)
+      })
+      if (Object.keys(values).length > 0) {
+        form.reset({ ...form.getValues(), ...values })
       }
     }
-    loadSettings()
-  }, [form])
+  }, [settings, form])
 
   async function onSubmit(data: NotificationFormValues) {
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "notifications", data }),
-      })
-
-      if (!response.ok) throw new Error("Failed to save settings")
-      
-      toast.success("Notification settings updated")
-    } catch (error) {
-      toast.error("Failed to update notifications")
-      console.error(error)
-    }
+    updateSettings.mutate({ category: "notifications", data })
   }
 
   return (
@@ -111,8 +93,8 @@ export function NotificationForm() {
           </FieldGroup>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            Save Notification Settings
+          <Button type="submit" disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? "Saving..." : "Save Notification Settings"}
           </Button>
         </CardFooter>
       </form>

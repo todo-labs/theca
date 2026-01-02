@@ -156,7 +156,7 @@ export const userRecommendationsRepository = {
   updateStatus: (id: number, status: RecommendationStatus) =>
     db
       .update(userRecommendations)
-      .set({ status, reviewedAt: sql`unixepoch()` })
+      .set({ status, reviewedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(userRecommendations.id, id))
       .returning(),
 

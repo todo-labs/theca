@@ -42,7 +42,7 @@ export const readingGoalsRepository = {
   update: (id: number, data: Partial<NewReadingGoal>) =>
     db
       .update(readingGoals)
-      .set({ ...data, updatedAt: sql`unixepoch()` })
+      .set({ ...data, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(readingGoals.id, id))
       .returning(),
 
@@ -52,7 +52,7 @@ export const readingGoalsRepository = {
   updateProgress: (id: number, currentProgress: number) =>
     db
       .update(readingGoals)
-      .set({ currentProgress, updatedAt: sql`unixepoch()` })
+      .set({ currentProgress, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(readingGoals.id, id))
       .returning(),
 
@@ -62,7 +62,7 @@ export const readingGoalsRepository = {
   deactivate: (id: number) =>
     db
       .update(readingGoals)
-      .set({ isActive: false, updatedAt: sql`unixepoch()` })
+      .set({ isActive: false, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(readingGoals.id, id))
       .returning(),
 
@@ -76,7 +76,7 @@ export const readingGoalsRepository = {
       .where(
         and(
           eq(readingGoals.isActive, true),
-          sql`date() BETWEEN ${readingGoals.periodStart} AND ${readingGoals.periodEnd}`,
+          sql`CURRENT_DATE BETWEEN ${readingGoals.periodStart} AND ${readingGoals.periodEnd}`,
         ),
       ),
 };
@@ -105,7 +105,7 @@ export const readingStreaksRepository = {
       .select()
       .from(readingStreaks)
       .where(
-        sql`date() BETWEEN ${readingStreaks.streakStart} AND ${readingStreaks.streakEnd}`,
+        sql`CURRENT_DATE BETWEEN ${readingStreaks.streakStart} AND ${readingStreaks.streakEnd}`,
       )
       .orderBy(desc(readingStreaks.consecutiveDays))
       .limit(1),

@@ -40,11 +40,7 @@ export const bookRepository = {
    * Updates an existing book in the database.
    */
   update: (id: number, data: Partial<NewBook>) =>
-    db
-      .update(books)
-      .set({ ...data, updatedAt: sql`unixepoch()` })
-      .where(eq(books.id, id))
-      .returning(),
+    db.update(books).set(data).where(eq(books.id, id)).returning(),
 
   /**
    * Deletes a book from the database.
@@ -57,7 +53,7 @@ export const bookRepository = {
   updateStatus: (id: number, status: ReadingStatus) =>
     db
       .update(books)
-      .set({ readingStatus: status, updatedAt: sql`unixepoch()` })
+      .set({ readingStatus: status, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(books.id, id))
       .returning(),
 
@@ -67,7 +63,7 @@ export const bookRepository = {
   updateProgress: (id: number, currentPage: number) =>
     db
       .update(books)
-      .set({ currentPage, updatedAt: sql`unixepoch()` })
+      .set({ currentPage, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(books.id, id))
       .returning(),
 
@@ -181,7 +177,7 @@ export const journalNotesRepository = {
   update: (id: number, data: Partial<NewJournalNote>) =>
     db
       .update(journalNotes)
-      .set({ ...data, updatedAt: sql`unixepoch()` })
+      .set({ ...data, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
       .where(eq(journalNotes.id, id))
       .returning(),
 

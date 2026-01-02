@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { useAuthStore } from "@/lib/stores/auth-store"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useLogout } from "@/hooks/queries/use-auth"
 
 interface NavItem {
   label: string
@@ -16,26 +16,20 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/admin", segment: "" },
   { label: "Books", href: "/admin/books", segment: "books" },
-  { label: "Library", href: "/admin/library", segment: "library" },
   { label: "Reading Progress", href: "/admin/reading-progress", segment: "reading-progress" },
-  { label: "User Recommendations", href: "/admin/user-recommendations", segment: "user-recommendations" },
-  { label: "AI Recommendations", href: "/admin/ai-recommendations", segment: "ai-recommendations" },
+  { label: "Recommendations", href: "/admin/recommendations", segment: "recommendations" },
   { label: "Reports", href: "/admin/reports", segment: "reports" },
   { label: "Settings", href: "/admin/settings", segment: "settings" },
 ]
 
 export function AdminNavbar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const { setAuthenticated } = useAuthStore()
+  const logout = useLogout()
 
-  const handleLogout = async () => {
-    await fetch("/api/auth", { method: "DELETE" })
-    setAuthenticated(false)
-    router.push("/admin/login")
+  const handleLogout = () => {
+    logout.mutate()
   }
 
-  // Extract the segment after /admin/
   const currentSegment = pathname.split("/admin/")[1] || ""
 
   return (
@@ -77,8 +71,9 @@ export function AdminNavbar() {
             onClick={handleLogout}
             variant="ghost"
             className="text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-transparent hover:text-primary px-3 py-1 ml-2"
+            disabled={logout.isPending}
           >
-            Logout
+            {logout.isPending ? "Logging out..." : "Logout"}
           </Button>
         </div>
       </div>

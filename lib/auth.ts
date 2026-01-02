@@ -25,7 +25,8 @@ export function verifyTOTP(token: string): boolean {
 
 export async function createSession() {
   const expiresAt = new Date(
-    Date.now() + (parseInt(process.env.SESSION_TIMEOUT_HOURS || "24") * 60 * 60 * 1000)
+    Date.now() +
+      parseInt(process.env.SESSION_TIMEOUT_HOURS || "24") * 60 * 60 * 1000,
   );
 
   const sessionToken = crypto.randomUUID();
@@ -67,7 +68,22 @@ export async function deleteSession(token: string) {
 }
 
 export async function cleanupExpiredSessions() {
-  await db
-    .delete(sessions)
-    .where(lte(sessions.expiresAt, new Date()));
+  await db.delete(sessions).where(lte(sessions.expiresAt, new Date()));
+}
+
+export async function getServerSession(request?: Request) {
+  const cookies = request
+    ? request.headers.get("cookie")
+    : typeof document !== "undefined"
+      ? document.cookie
+      : "";
+
+  if (!cookies) return null;
+
+  const tokenMatch = cookies.match(/session_token=([^;]+)/);
+  if (!tokenMatch) return null;
+
+  const token = tokenMatch[1];
+  const isValid = await verifySession(token);
+  return isValid ? token : null;
 }

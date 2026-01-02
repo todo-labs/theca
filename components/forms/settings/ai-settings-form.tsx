@@ -17,9 +17,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Checkbox } from "@/components/ui/checkbox"
 
 import { AISettingsFormValues, aiSettingsFormSchema } from "@/lib/schemas/settings"
+import { useSettings, useUpdateSettings } from "@/hooks/queries/use-settings"
 import { useEffect } from "react"
 
 export function AISettingsForm() {
+  const { data: settings } = useSettings()
+  const updateSettings = useUpdateSettings()
+
   const form = useForm<AISettingsFormValues>({
     resolver: zodResolver(aiSettingsFormSchema),
     defaultValues: {
@@ -33,44 +37,21 @@ export function AISettingsForm() {
   })
 
   useEffect(() => {
-    async function loadSettings() {
-      try {
-        const response = await fetch("/api/settings")
-        const data = await response.json()
-        
-        // Only set values that exist in the schema
-        const aiValues: any = {}
-        Object.keys(aiSettingsFormSchema.shape).forEach(key => {
-          if (data[key] !== undefined) {
-            aiValues[key] = data[key]
-          }
-        })
-        
-        if (Object.keys(aiValues).length > 0) {
-          form.reset({ ...form.getValues(), ...aiValues })
+    if (settings) {
+      const aiValues: any = {}
+      Object.keys(aiSettingsFormSchema.shape).forEach(key => {
+        if (settings[key] !== undefined) {
+          aiValues[key] = settings[key]
         }
-      } catch (error) {
-        console.error("Failed to load AI settings:", error)
+      })
+      if (Object.keys(aiValues).length > 0) {
+        form.reset({ ...form.getValues(), ...aiValues })
       }
     }
-    loadSettings()
-  }, [form])
+  }, [settings, form])
 
   async function onSubmit(data: AISettingsFormValues) {
-    try {
-      const response = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "ai", data }),
-      })
-
-      if (!response.ok) throw new Error("Failed to save settings")
-      
-      toast.success("AI settings updated")
-    } catch (error) {
-      toast.error("Failed to update AI settings")
-      console.error(error)
-    }
+    updateSettings.mutate({ category: "ai", data })
   }
 
   return (
@@ -168,8 +149,8 @@ export function AISettingsForm() {
           </FieldGroup>
         </CardContent>
         <CardFooter className="border-t px-6 py-4">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            Save AI Settings
+          <Button type="submit" disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? "Saving..." : "Save AI Settings"}
           </Button>
         </CardFooter>
       </form>
