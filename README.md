@@ -1,32 +1,35 @@
 # Theca: AI-Powered Personal Library Manager
 
-Theca is a book management and reading progress tracking application built with Next.js, DrizzleORM, and Vercel AI SDK.
+Theca is a premium book management and reading progress tracking application built with **Next.js 15**, **DrizzleORM**, and **Vercel AI SDK**. It features a stunning, bookshelf-inspired UI and powerful AI integrations.
 
 ## Features
 
-- 📚 Book library management
-- 📖 Reading progress tracking
-- 🤖 AI-powered book recommendations
-- 📊 Reading analytics and reports
-- 🔐 Secure TOTP authentication for admin access
-- 🌓 Dark/Light theme support
+- 📚 **Immersive Library Management**: A beautiful, animated bookshelf interface to explore and manage your collection.
+- 📖 **Reading Progress Tracking**: Detailed tracking of pages read, reading duration, and current status.
+- 🤖 **Unified Recommendations**: A single management hub for both AI-generated and community-submitted book suggestions.
+- 📊 **Reading Analytics**: Comprehensive reports and insights into your reading habits and goals.
+- 🔐 **Premium Admin Security**: Secure TOTP (Time-based One-Time Password) authentication for the admin panel.
+- 🌓 **Dynamic Design**: Multi-theme support with glassmorphism, smooth animations, and a responsive layout.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
-- **Database**: SQLite with DrizzleORM
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, React 19)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [DrizzleORM](https://orm.drizzle.team/)
+- **Data Fetching**: [TanStack Query v5](https://tanstack.com/query/latest)
 - **Authentication**: TOTP (Time-based One-Time Password)
-- **AI**: Vercel AI SDK with OpenRouter
-- **Styling**: Tailwind CSS v4
-- **UI Components**: Radix UI
-- **State Management**: Zustand
-- **Runtime**: Bun
+- **AI Integration**: [Vercel AI SDK](https://sdk.vercel.ai/) with [OpenRouter](https://openrouter.ai/)
+- **Search Engine**: [Exa AI](https://exa.ai/) for smart recommendations
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **UI Components**: [Radix UI](https://www.radix-ui.com/) & [Shadcn UI](https://ui.shadcn.com/)
+- **Runtime**: [Bun](https://bun.sh/)
 
 ## Getting Started
 
 ### Prerequisites
 
 - [Bun](https://bun.sh/) installed on your system
+- A PostgreSQL database (e.g., Supabase, Neon, or local)
 - A TOTP authenticator app (Google Authenticator, Authy, etc.)
 
 ### Installation
@@ -45,21 +48,29 @@ Theca is a book management and reading progress tracking application built with 
 3. **Set up environment variables**:
    Create a `.env` file in the root directory:
    ```env
+   # Database
+   DATABASE_URL=postgresql://user:password@localhost:5432/theca
+   
    # TOTP Authentication
-   TOTP_SECRET=your_totp_secret_here
+   TOTP_SECRET=your_generated_secret_here
    
-   # AI Configuration (optional)
+   # AI Configuration
    OPENROUTER_API_KEY=your_openrouter_key
+   EXA_API_KEY=your_exa_key
    
-   # Email (optional)
-   RESEND_API_KEY=your_resend_key
+   # Feature Flags
+   ENABLE_AI_RECOMMENDATIONS=true
+   ENABLE_AI_COVER_EXTRACTION=true
    ```
 
-4. **Generate TOTP Secret** (see TOTP Authentication Setup below)
-
-5. **Set up the database**:
+4. **Initialize the database**:
    ```bash
    bun run db:push
+   ```
+
+5. **Generate TOTP Secret**:
+   ```bash
+   bun run generate-totp
    ```
 
 6. **Start the development server**:
@@ -70,120 +81,35 @@ Theca is a book management and reading progress tracking application built with 
 7. **Open your browser**:
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## TOTP Authentication Setup
+## Admin Panel
 
-Theca uses TOTP (Time-based One-Time Password) authentication to secure the admin panel.
+The administrative backend is located at `/admin` and provides tools for:
 
-### Generate a New TOTP Secret
+- **Dashboard**: High-level overview of library stats and recent activity.
+- **Books**: Detailed CRUD operations for your book collection.
+- **Reading Progress**: Log and monitor reading sessions and streaks.
+- **Recommendations**: Unified interface to review AI proposals and community suggestions.
+- **Reports**: Visualized analytics using Recharts.
+- **Settings**: Comprehensive system and AI configuration.
 
-Run the following command to generate a new TOTP secret with a QR code:
+## TOTP Authentication
 
-```bash
-bun run generate-totp
-```
+Theca uses industry-standard TOTP authentication. To set up:
 
-This will display:
-- 📱 A QR code that you can scan with your authenticator app
-- 🔑 The Base32 secret key
-- 📝 Instructions for adding it to your `.env` file
-
-### Setup Steps
-
-1. **Generate the secret**:
-   ```bash
-   bun run generate-totp
-   ```
-
-2. **Scan the QR code** with your authenticator app:
-   - Google Authenticator
-   - Authy
-   - Microsoft Authenticator
-   - 1Password
-   - Any TOTP-compatible app
-
-3. **Add the secret to your `.env` file**:
-   ```env
-   TOTP_SECRET=YOUR_GENERATED_SECRET_HERE
-   ```
-
-4. **Restart your development server** if it's running:
-   ```bash
-   bun run dev
-   ```
-
-### Using TOTP Authentication
-
-1. Navigate to `/admin/login`
-2. Enter the 6-digit code from your authenticator app
-3. The code refreshes every 30 seconds
-
-### TOTP Configuration Details
-
-- **Issuer**: theca
-- **Account**: admin
-- **Algorithm**: SHA1
-- **Digits**: 6
-- **Period**: 30 seconds
-
-### Security Notes
-
-- Keep your TOTP secret secure and never commit it to version control
-- The `.env` file is already in `.gitignore`
-- Each TOTP code is valid for 30 seconds
-- Generate a new secret if you suspect it has been compromised
+1. Run `bun run generate-totp` to get a QR code.
+2. Scan the code with your preferred authenticator app.
+3. Save the secret key in your `.env` as `TOTP_SECRET`.
+4. Login at `/admin/login` using the 6-digit code.
 
 ## Available Scripts
 
-- `bun run dev` - Start the development server
+- `bun run dev` - Start development server
 - `bun run build` - Build for production
-- `bun run start` - Start the production server
-- `bun run lint` - Run ESLint
-- `bun run format` - Format code with Prettier
-- `bun run generate-totp` - Generate a new TOTP secret with QR code
-- `bun run db:generate` - Generate database migrations
-- `bun run db:migrate` - Run database migrations
-- `bun run db:push` - Push schema changes to database
+- `bun run db:push` - Sync schema to database
 - `bun run db:studio` - Open Drizzle Studio
-
-## Project Structure
-
-```
-theca/
-├── app/                    # Next.js App Router
-│   ├── admin/             # Admin panel pages
-│   ├── api/               # API routes
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── admin/            # Admin-specific components
-│   ├── book/             # Book-related components
-│   ├── bookshelf/        # Bookshelf components
-│   ├── layout/           # Layout components
-│   └── ui/               # UI primitives (shadcn/ui)
-├── lib/                   # Utility libraries
-│   ├── db/               # Database configuration
-│   ├── stores/           # Zustand stores
-│   └── auth.ts           # Authentication utilities
-├── scripts/              # Utility scripts
-│   └── generate-totp-secret.ts
-└── public/               # Static assets
-```
-
-## Admin Panel
-
-The admin panel is accessible at `/admin` and includes:
-
-- **Dashboard** - Overview of library statistics
-- **Books** - Manage book collection
-- **Library** - Library settings and organization
-- **Reading Progress** - Track reading progress
-- **User Recommendations** - Manage user recommendations
-- **AI Recommendations** - Configure AI-powered recommendations
-- **Reports** - View analytics and reports
-- **Settings** - System settings
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- `bun run generate-totp` - Generate new TOTP secret
+- `bun run format` - Format code with Prettier
+- `bun run lint` - Run ESLint
 
 ## License
 

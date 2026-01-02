@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userRecommendationsRepository } from "@/lib/db/repositories/recommendations-repository";
 import { settingsRepository } from "@/lib/db/repositories/settings-repository";
+import { emailService } from "@/lib/email/email-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +26,29 @@ export async function POST(request: NextRequest) {
       submitterNote: note || null,
       ipAddress,
     });
+
+    // Dispatch email notification
+    try {
+      const emailNotificationsEnabled = await settingsRepository.getBoolean("emailNotifications");
+      const adminEmailResult = await settingsRepository.findByKey("email");
+      const adminEmail = adminEmailResult[0]?.value;
+
+      if (emailNotificationsEnabled && adminEmail) {
+        const protocol = request.headers.get("x-forwarded-proto") || "http";
+        const host = request.headers.get("host");
+        const adminLink = `${protocol}://${host}/admin/recommendations`;
+
+        await emailService.sendEmail(adminEmail, "recommendation_notification", {
+          bookTitle: title,
+          author: author || undefined,
+          submitterNote: note || undefined,
+          adminLink,
+        }, { host: host || undefined });
+      }
+    } catch (emailError) {
+      // Don't fail the whole request if email fails, but log it
+      console.error("Failed to send notification email:", emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
