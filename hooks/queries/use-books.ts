@@ -37,11 +37,19 @@ export function useUpdateBookProgress() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, currentPage }: { id: number; currentPage: number }) => {
-      const res = await fetch(`/api/books/${id}/progress`, {
-        method: "POST",
+    mutationFn: async ({
+      id,
+      currentPage,
+      readingStatus,
+    }: {
+      id: number;
+      currentPage?: number;
+      readingStatus?: string;
+    }) => {
+      const res = await fetch(`/api/admin/books/${id}/progress`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPage }),
+        body: JSON.stringify({ currentPage, readingStatus }),
       });
       if (!res.ok) throw new Error("Failed to update progress");
       return res.json();

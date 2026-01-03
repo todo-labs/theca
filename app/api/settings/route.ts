@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/middleware";
-import { settingsRepository } from "@/lib/db/repositories/settings-repository";
+import { settingsRepository } from "@/lib/db/repositories/settings";
 import { 
   profileFormSchema, 
   aiSettingsFormSchema, 

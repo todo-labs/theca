@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { bookRepository } from "@/lib/db/repositories/books-repository";
+import { bookRepository } from "@/lib/db/repositories/books";
 
 export async function GET() {
   try {
-    const allBooks = await bookRepository.findAll();
-    return NextResponse.json(allBooks);
+    const publicBooks = await bookRepository.findVisible();
+    return NextResponse.json(publicBooks);
   } catch (error) {
     console.error("Error fetching books:", error);
     return NextResponse.json(
