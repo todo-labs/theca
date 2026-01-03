@@ -1,7 +1,8 @@
 import { RollingBookshelf } from "@/components/admin/rolling-bookshelf";
+import { WishlistShelf } from "@/components/admin/wishlist-shelf";
 import { SmartBookOnboarding } from "@/components/modals/smart-book-onboarding";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Camera } from "lucide-react";
+import { Sparkles, Camera } from "lucide-react";
 import Link from "next/link";
 
 export default function BooksPage() {
@@ -31,6 +32,7 @@ export default function BooksPage() {
           />
         </div>
       </div>
+      <WishlistShelf />
       <RollingBookshelf />
     </div>
   );
