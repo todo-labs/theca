@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { userRecommendationsRepository } from "@/lib/db/repositories/recommendations";
 import { settingsRepository } from "@/lib/db/repositories/settings";
 import { emailService } from "@/lib/email/email-service";
+import { z } from "zod";
+
+const recommendationSchema = z.object({
+  title: z.string()
+    .min(1, "Book title is required")
+    .max(500, "Title must be less than 500 characters")
+    .trim(),
+  author: z.string()
+    .max(200, "Author must be less than 200 characters")
+    .trim()
+    .optional(),
+  note: z.string()
+    .max(1000, "Note must be less than 1000 characters")
+    .trim()
+    .optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,21 +33,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, author, note } = body;
+    const validationResult = recommendationSchema.safeParse(body);
 
-    if (!title) {
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Book title is required" },
+        { error: "Validation failed", details: validationResult.error.flatten() },
         { status: 400 },
       );
     }
 
-    const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
+    const validated = validationResult.data;
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
     await userRecommendationsRepository.create({
-      bookTitle: title,
-      author: author || null,
-      submitterNote: note || null,
+      bookTitle: validated.title,
+      author: validated.author || null,
+      submitterNote: validated.note || null,
       ipAddress,
       submittedAt: new Date(),
     });
@@ -52,9 +69,9 @@ export async function POST(request: NextRequest) {
           adminEmail,
           "recommendation_notification",
           {
-            bookTitle: title,
-            author: author || undefined,
-            submitterNote: note || undefined,
+            bookTitle: validated.title,
+            author: validated.author || undefined,
+            submitterNote: validated.note || undefined,
             adminLink,
           },
           { host: host || undefined },

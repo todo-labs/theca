@@ -1,4 +1,4 @@
-import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, ilike, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   books,
@@ -91,7 +91,10 @@ export const bookRepository = {
       .select()
       .from(books)
       .where(
-        sql`${books.title} ILIKE ${"%" + query + "%"} OR ${books.author} ILIKE ${"%" + query + "%"}`,
+        or(
+          ilike(books.title, `%${query}%`),
+          ilike(books.author, `%${query}%`)
+        )
       ),
 
   /**

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const bookId = parseInt(id, 10);
 
-    if (isNaN(bookId)) {
+    if (isNaN(bookId) || bookId < 1) {
       return NextResponse.json({ error: "Invalid book ID" }, { status: 400 });
     }
 
@@ -47,7 +47,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const bookId = parseInt(id, 10);
 
-    if (isNaN(bookId)) {
+    if (isNaN(bookId) || bookId < 1) {
       return NextResponse.json({ error: "Invalid book ID" }, { status: 400 });
     }
 
@@ -120,7 +120,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     const bookId = parseInt(id, 10);
 
-    if (isNaN(bookId)) {
+    if (isNaN(bookId) || bookId < 1) {
       return NextResponse.json({ error: "Invalid book ID" }, { status: 400 });
     }
 

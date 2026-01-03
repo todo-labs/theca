@@ -1,21 +1,42 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { bookRepository } from "@/lib/db/repositories/books";
 import { ReadingStatus } from "@/lib/db/schema";
+import { requireAuth } from "@/lib/middleware";
+import { z } from "zod";
+
+const acquireSchema = z.object({
+  status: z.enum(["to_read", "in_progress", "read", "paused", "dnf"]).optional(),
+});
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireAuth(request);
+  if (!auth.isAuthenticated) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
     const bookId = parseInt(id);
 
-    if (isNaN(bookId)) {
+    if (isNaN(bookId) || bookId < 1) {
       return NextResponse.json({ error: "Invalid book ID" }, { status: 400 });
     }
 
     const body = await request.json();
-    const status: ReadingStatus = body.status || "to_read";
+    const validationResult = acquireSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validationResult.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const validated = validationResult.data;
+    const status: ReadingStatus = validated.status || "to_read";
 
     const result = await bookRepository.moveToLibrary(bookId, status);
     const updatedBook = result[0];
