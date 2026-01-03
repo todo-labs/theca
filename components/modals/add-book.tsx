@@ -31,7 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Upload, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
+import { useCreateBook } from "@/hooks/queries/use-admin-books";
+import { useCreateWishlistItem } from "@/hooks/queries/use-wishlist";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -49,13 +51,10 @@ const formSchema = z.object({
   publisher: z.string().optional(),
   pageCount: z.number().int().positive().optional().or(z.literal("")),
   description: z.string().optional(),
-  readingStatus: z.enum([
-    "want_to_read",
-    "currently_reading",
-    "completed",
-    "on_hold",
-    "did_not_finish",
-  ]),
+  readingStatus: z.enum(["to_read", "in_progress", "read", "paused", "dnf"]),
+  isWishlist: z.boolean(),
+  wishlistPriority: z.number().min(1).max(5).optional(),
+  purchaseUrl: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -65,16 +64,12 @@ interface AddBookModalProps {
   onSuccess?: () => void;
 }
 
-import { useCreateBook, useFetchBookDetails, useUploadCover } from "@/hooks/queries/use-admin-books";
-
 export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
   const [open, setOpen] = useState(false);
-  const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   const createBook = useCreateBook();
-  const fetchDetails = useFetchBookDetails();
-  const uploadCover = useUploadCover();
+  const createWishlistItem = useCreateWishlistItem();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -88,75 +83,74 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
       publisher: "",
       pageCount: "",
       description: "",
-      readingStatus: "want_to_read",
+      readingStatus: "to_read",
+      isWishlist: false,
+      wishlistPriority: undefined,
+      purchaseUrl: "",
     },
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverImage(file);
-      setCoverPreview(URL.createObjectURL(file));
-    }
-  };
+  const isWishlist = form.watch("isWishlist");
 
   const fetchBookDetails = async () => {
-    const title = form.getValues("title");
-    const author = form.getValues("author");
-
-    if (!title || !author) {
-      toast.error("Please enter both title and author");
-      return;
-    }
-
-    try {
-      const data = await fetchDetails.mutateAsync({ title, author });
-
-      form.setValue("subtitle", data.subtitle || "");
-      form.setValue("isbn", data.isbn || "");
-      form.setValue("genre", data.genre || "");
-      form.setValue("publicationYear", data.publicationYear || "");
-      form.setValue("publisher", data.publisher || "");
-      form.setValue("pageCount", data.pageCount || "");
-      form.setValue("description", data.description || "");
-
-      if (data.coverImageUrl) {
-        setCoverPreview(data.coverImageUrl);
-      }
-
-      toast.success("Book details fetched successfully!");
-    } catch (error) {
-      toast.error("Failed to fetch book details. Please try again.");
-    }
+    toast.info("Auto-fill feature coming soon!");
   };
 
   async function onSubmit(values: FormValues) {
     try {
-      let coverImageUrl = null;
-      let coverImagePath = null;
-      let coverImageHash = null;
-
-      if (coverImage) {
-        const uploadData = await uploadCover.mutateAsync(coverImage);
-        coverImageUrl = uploadData.url;
-        coverImagePath = uploadData.path;
-        coverImageHash = uploadData.hash;
+      if (values.isWishlist) {
+        await createWishlistItem.mutateAsync({
+          title: values.title,
+          subtitle: values.subtitle || undefined,
+          author: values.author,
+          isbn: values.isbn || undefined,
+          genre: values.genre || undefined,
+          publicationYear: values.publicationYear
+            ? Number(values.publicationYear)
+            : undefined,
+          publisher: values.publisher || undefined,
+          pageCount: values.pageCount ? Number(values.pageCount) : undefined,
+          description: values.description || undefined,
+          coverImageUrl: coverPreview || undefined,
+          wishlistPriority: values.wishlistPriority,
+          purchaseUrl: values.purchaseUrl || undefined,
+        });
+      } else {
+        await createBook.mutateAsync({
+          title: values.title,
+          subtitle: values.subtitle || null,
+          author: values.author,
+          isbn: values.isbn || null,
+          genre: values.genre || null,
+          publicationYear: values.publicationYear
+            ? Number(values.publicationYear)
+            : null,
+          publisher: values.publisher || null,
+          pageCount: values.pageCount ? Number(values.pageCount) : null,
+          description: values.description || null,
+          coverImageUrl: coverPreview || null,
+          readingStatus: values.readingStatus,
+        });
       }
 
-      await createBook.mutateAsync({
-        ...values,
-        publicationYear: values.publicationYear
-          ? Number(values.publicationYear)
-          : null,
-        pageCount: values.pageCount ? Number(values.pageCount) : null,
-        coverImageUrl,
-        coverImagePath,
-        coverImageHash,
+      toast.success(
+        values.isWishlist ? "Added to wishlist!" : "Book added successfully!",
+      );
+      form.reset({
+        title: "",
+        subtitle: "",
+        author: "",
+        isbn: "",
+        genre: "",
+        publicationYear: "",
+        publisher: "",
+        pageCount: "",
+        description: "",
+        readingStatus: "to_read",
+        isWishlist: false,
+        wishlistPriority: undefined,
+        purchaseUrl: "",
       });
-
-      toast.success("Book added successfully!");
-      form.reset();
-      setCoverImage(null);
       setCoverPreview(null);
       setOpen(false);
       onSuccess?.();
@@ -181,7 +175,8 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
             Add New Book
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Upload a cover image and enter the book details below.
+            Enter the book details below. Use the AI button to auto-fill from
+            book databases.
           </DialogDescription>
         </DialogHeader>
 
@@ -193,7 +188,7 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
                 <label className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-                  Cover Image
+                  Cover Image URL
                 </label>
                 <div className="flex items-center gap-4">
                   {coverPreview && (
@@ -206,20 +201,13 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
                     </div>
                   )}
                   <div className="flex-1">
-                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-border/40 rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/20">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-6 h-6 mb-2 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">
-                          Click to upload cover
-                        </p>
-                      </div>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                    </label>
+                    <Input
+                      type="url"
+                      placeholder="https://example.com/cover.jpg"
+                      value={coverPreview || ""}
+                      onChange={(e) => setCoverPreview(e.target.value)}
+                      className="bg-muted/30 border-border/40"
+                    />
                   </div>
                 </div>
               </div>
@@ -295,11 +283,11 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
                   type="button"
                   variant="outline"
                   onClick={fetchBookDetails}
-                  disabled={fetchDetails.isPending}
+                  disabled={false}
                   className="w-full flex items-center gap-2 text-[11px] font-bold tracking-[0.2em] uppercase"
                 >
                   <Sparkles className="w-4 h-4" />
-                  {fetchDetails.isPending ? "Fetching Details..." : "Auto-Fill with AI"}
+                  Auto-Fill with AI
                 </Button>
               </div>
 
@@ -475,31 +463,121 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
               <div className="col-span-2">
                 <FormField
                   control={form.control}
-                  name="readingStatus"
+                  name="isWishlist"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-                        Reading Status
-                      </FormLabel>
                       <FormControl>
-                        <select
-                          {...field}
-                          className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        >
-                          <option value="want_to_read">Want to Read</option>
-                          <option value="currently_reading">
-                            Currently Reading
-                          </option>
-                          <option value="completed">Completed</option>
-                          <option value="on_hold">On Hold</option>
-                          <option value="did_not_finish">Did Not Finish</option>
-                        </select>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="isWishlist"
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <label
+                            htmlFor="isWishlist"
+                            className="text-sm font-medium text-foreground"
+                          >
+                            Add to Wishlist
+                          </label>
+                        </div>
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              {!isWishlist && (
+                <div className="col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="readingStatus"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                          Reading Status
+                        </FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          >
+                            <option value="to_read">Want to Read</option>
+                            <option value="in_progress">Reading</option>
+                            <option value="read">Finished</option>
+                            <option value="paused">Paused</option>
+                            <option value="dnf">Did Not Finish</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {isWishlist && (
+                <>
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="wishlistPriority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                            Priority (1-5)
+                          </FormLabel>
+                          <FormControl>
+                            <select
+                              {...field}
+                              value={field.value || ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value
+                                    ? Number(e.target.value)
+                                    : undefined,
+                                )
+                              }
+                              className="w-full px-3 py-2 rounded-md bg-muted/30 border border-border/40 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            >
+                              <option value="">Select Priority</option>
+                              <option value="1">1 - Low</option>
+                              <option value="2">2</option>
+                              <option value="3">3 - Medium</option>
+                              <option value="4">4</option>
+                              <option value="5">5 - High</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="purchaseUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
+                            Purchase URL (optional)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://google.com/books/..."
+                              {...field}
+                              className="bg-muted/30 border-border/40"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="col-span-2">
                 <FormField
@@ -535,10 +613,14 @@ export function AddBookModal({ trigger, onSuccess }: AddBookModalProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={createBook.isPending || uploadCover.isPending}
+                disabled={createBook.isPending || createWishlistItem.isPending}
                 className="text-[11px] font-bold tracking-[0.2em] uppercase"
               >
-                {createBook.isPending || uploadCover.isPending ? "Adding..." : "Add Book"}
+                {createBook.isPending || createWishlistItem.isPending
+                  ? "Adding..."
+                  : isWishlist
+                    ? "Add to Wishlist"
+                    : "Add Book"}
               </Button>
             </div>
           </form>
