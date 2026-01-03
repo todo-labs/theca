@@ -9,12 +9,13 @@ import {
 } from "drizzle-orm/pg-core";
 
 export type ReadingStatus =
-  | "want_to_read"
-  | "currently_reading"
-  | "completed"
-  | "on_hold"
-  | "did_not_finish";
-export type MetadataSource = "manual" | "open_library" | "google_books";
+  | "to_read"
+  | "in_progress"
+  | "read"
+  | "paused"
+  | "dnf";
+export type ReadingSource = "library" | "other";
+export type MetadataSource = "manual" | "ai_extracted" | "both";
 export type GoalType =
   | "pages_per_week"
   | "books_per_month"
@@ -40,19 +41,11 @@ export const books = pgTable("books", {
   pageCount: integer("page_count"),
   description: text("description"),
   coverImageUrl: text("cover_image_url"),
-  coverImagePath: text("cover_image_path"),
-  coverImageHash: text("cover_image_hash"),
   readingStatus: text("reading_status", {
-    enum: [
-      "want_to_read",
-      "currently_reading",
-      "completed",
-      "on_hold",
-      "did_not_finish",
-    ],
+    enum: ["to_read", "in_progress", "read", "paused", "dnf"],
   })
     .notNull()
-    .default("want_to_read"),
+    .default("to_read"),
   personalRating: integer("personal_rating"),
   personalNotes: text("personal_notes"),
   dateAdded: timestamp("date_added").notNull().defaultNow(),
@@ -61,11 +54,16 @@ export const books = pgTable("books", {
   currentPage: integer("current_page").default(0),
   isVisiblePublicly: boolean("is_visible_publicly").default(false),
   metadataSource: text("metadata_source", {
-    enum: ["manual", "open_library", "google_books"],
+    enum: ["manual", "ai_extracted", "both"],
   })
     .notNull()
     .default("manual"),
   lastAiRefreshed: timestamp("last_ai_refreshed"),
+  isWishlist: boolean("is_wishlist").default(false),
+  wishlistPriority: integer("wishlist_priority"),
+  purchaseUrl: text("purchase_url"),
+  dateAddedToWishlist: timestamp("date_added_to_wishlist"),
+  dateAcquired: timestamp("date_acquired"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -114,11 +112,10 @@ export const aiRecommendations = pgTable("ai_recommendations", {
   title: text("title").notNull(),
   author: text("author"),
   genre: text("genre"),
-  themes: jsonb("themes").$type<string[]>(),
+  themes: jsonb("themes"),
   reason: text("reason"),
   relevanceScore: integer("relevance_score"),
-  basedOn:
-    jsonb("based_on").$type<Array<{ bookId: number; weight?: number }>>(),
+  basedOn: jsonb("based_on"),
   isAccepted: boolean("is_accepted").default(false),
   isDeclined: boolean("is_declined").default(false),
   modelId: text("model_id").notNull(),
@@ -132,7 +129,7 @@ export const userRecommendations = pgTable("user_recommendations", {
   author: text("author"),
   submitterNote: text("submitter_note"),
   ipAddress: text("ip_address"),
-  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+  submittedAt: timestamp("submitted_at").notNull(),
   status: text("status", { enum: ["pending", "approved", "rejected"] })
     .notNull()
     .default("pending"),
