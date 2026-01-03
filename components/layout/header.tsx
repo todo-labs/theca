@@ -1,49 +1,82 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useAuthStore } from "@/lib/stores/auth-store"
-import { RecommendationModal } from "@/components/modals/recommendation-modal"
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { RecommendationModal } from "@/components/modals/recommendation";
+import { Gift } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function Header() {
-  const { isAuthenticated, setAuthenticated } = useAuthStore()
-  const [recommendationsEnabled, setRecommendationsEnabled] = useState(false)
+  const { isAuthenticated, setAuthenticated } = useAuthStore();
+  const [recommendationsEnabled, setRecommendationsEnabled] = useState(false);
+  const [viewMode, setViewMode] = useState<"library" | "wishlist">("library");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const savedViewMode = localStorage.getItem("wishlistViewMode") as
+      | "library"
+      | "wishlist"
+      | null;
+    if (savedViewMode) {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  const toggleViewMode = () => {
+    const newMode = viewMode === "library" ? "wishlist" : "library";
+    setViewMode(newMode);
+    localStorage.setItem("wishlistViewMode", newMode);
+    window.dispatchEvent(
+      new CustomEvent("wishlistViewChange", { detail: newMode }),
+    );
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("/api/auth")
-        const data = await response.json()
-        setAuthenticated(data.isAuthenticated)
+        const response = await fetch("/api/auth");
+        const data = await response.json();
+        setAuthenticated(data.isAuthenticated);
       } catch (error) {
-        setAuthenticated(false)
+        setAuthenticated(false);
       }
-    }
-    
+    };
+
     const checkRecommendationsStatus = async () => {
       try {
-        const response = await fetch("/api/recommendations/status")
-        const data = await response.json()
-        setRecommendationsEnabled(data.enabled)
+        const response = await fetch("/api/recommendations/status");
+        const data = await response.json();
+        setRecommendationsEnabled(data.enabled);
       } catch (error) {
-        setRecommendationsEnabled(false)
+        setRecommendationsEnabled(false);
       }
-    }
+    };
 
-    checkAuth()
-    checkRecommendationsStatus()
-  }, [setAuthenticated])
+    checkAuth();
+    checkRecommendationsStatus();
+  }, [setAuthenticated]);
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/30">
       <div className="flex h-16 items-center justify-between px-8 lg:px-16">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold tracking-[0.25em] uppercase">theca</span>
+          <span className="text-[11px] font-bold tracking-[0.25em] uppercase">
+            theca
+          </span>
+          {mounted && viewMode === "wishlist" && (
+            <span className="text-[9px] font-bold tracking-[0.15em] uppercase text-muted-foreground bg-muted px-2 py-0.5 rounded">
+              Wishlist
+            </span>
+          )}
         </div>
         <nav className="hidden md:block">
-          <span className="text-[11px] font-medium tracking-wide text-muted-foreground/70">Library Management Software</span>
+          <span className="text-[11px] font-medium tracking-wide text-muted-foreground/70">
+            Library Management Software
+          </span>
         </nav>
         <div className="flex items-center gap-4">
           {recommendationsEnabled && (
@@ -52,8 +85,24 @@ export function Header() {
             </div>
           )}
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleViewMode}
+              className={cn(
+                "w-9 h-9 transition-all",
+                viewMode === "wishlist" && "bg-primary/10 text-primary",
+              )}
+              title={viewMode === "wishlist" ? "Show Library" : "Show Wishlist"}
+            >
+              <Gift className="w-4 h-4" />
+            </Button>
             <ThemeToggle />
-            <Button asChild variant="ghost" className="text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-transparent hover:text-primary px-3 py-1 ml-2">
+            <Button
+              asChild
+              variant="ghost"
+              className="text-[11px] font-bold tracking-[0.2em] uppercase hover:bg-transparent hover:text-primary px-3 py-1 ml-2"
+            >
               <Link href={isAuthenticated ? "/admin" : "/admin/login"}>
                 {isAuthenticated ? "Dashboard" : "Login"}
               </Link>
@@ -62,5 +111,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

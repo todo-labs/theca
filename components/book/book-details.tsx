@@ -21,7 +21,7 @@ export function BookDetails({
   metadata,
 }: BookDetailsProps) {
   return (
-    <section className="flex flex-col justify-center px-10 py-12 lg:px-14 xl:px-16">
+    <section className="flex flex-col justify-center h-full px-10 py-12 lg:px-14 xl:px-16">
       <div className="space-y-8 max-w-md">
         <div className="space-y-3">
           <h1 className="font-serif text-[2.75rem] leading-[1.05] font-normal text-foreground tracking-tight">

@@ -15,13 +15,15 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             staleTime: 60 * 1000,
           },
         },
-      })
+      }),
   );
 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === "development" && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   );
 }
