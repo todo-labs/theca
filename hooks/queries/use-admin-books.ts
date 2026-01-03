@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Book } from "@/lib/domain/books";
 
 export const adminBookKeys = {
   all: ["admin", "books"] as const,
@@ -9,7 +10,7 @@ export const adminBookKeys = {
 };
 
 export function useAdminBooks() {
-  return useQuery({
+  return useQuery<Book[]>({
     queryKey: adminBookKeys.list(),
     queryFn: async () => {
       const res = await fetch("/api/admin/books", {
@@ -44,7 +45,7 @@ export function useCreateBook() {
 }
 
 export function useAdminBook(id: string) {
-  return useQuery({
+  return useQuery<Book>({
     queryKey: adminBookKeys.detail(id),
     queryFn: async () => {
       const res = await fetch(`/api/admin/books/${id}`, {

@@ -138,7 +138,7 @@ export default function RecommendationsPage() {
             user.map((rec: any) => (
               <Card
                 key={rec.id}
-                className="rounded-sm border-border/25 hover:border-border/50 transition-colors"
+                className="rounded-sm border-border shadow-sm hover:border-border/50 transition-colors"
               >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start gap-4">
@@ -252,7 +252,7 @@ export default function RecommendationsPage() {
           ai.map((rec: any) => (
             <Card
               key={rec.id}
-              className="rounded-sm border-border/25 hover:border-border/50 transition-colors"
+              className="rounded-sm border-border shadow-sm hover:border-border/50 transition-colors"
             >
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start gap-4">

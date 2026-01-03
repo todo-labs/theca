@@ -68,7 +68,7 @@ export function WishlistShelf() {
 
           <div className="relative">
             <div className="flex gap-6 pb-8 overflow-x-auto no-scrollbar">
-              {wishlistBooks.map((book) => (
+              {wishlistBooks.map((book: Book) => (
                 <motion.div
                   key={book.id}
                   whileHover={{ y: -8 }}
@@ -91,7 +91,7 @@ export function WishlistShelf() {
                         <div
                           key={i}
                           className={`w-1.5 h-1.5 rounded-full ${
-                            i < book.wishlistPriority
+                            i < (book.wishlistPriority || 0)
                               ? "bg-primary"
                               : "bg-muted"
                           }`}

@@ -1,18 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string;
-  coverImageUrl: string | null;
-  readingStatus: string;
-  description: string | null;
-  publisher: string | null;
-  publicationYear: number | null;
-  pageCount: number | null;
-  isbn: string | null;
-  currentPage?: number;
-}
+import { Book } from "@/lib/domain/books";
 
 export const bookKeys = {
   all: ["books"] as const,

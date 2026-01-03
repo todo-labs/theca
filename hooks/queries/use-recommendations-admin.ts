@@ -4,8 +4,13 @@ export const adminRecommendationKeys = {
   all: ["admin", "recommendations"] as const,
 };
 
+interface RecommendationsResponse {
+  user: any[];
+  ai: any[];
+}
+
 export function useAdminRecommendations() {
-  return useQuery({
+  return useQuery<RecommendationsResponse>({
     queryKey: adminRecommendationKeys.all,
     queryFn: async () => {
       const res = await fetch("/api/admin/recommendations");

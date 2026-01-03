@@ -28,7 +28,7 @@ export function InsightCards({ insights, weeklyComparison }: InsightCardsProps) 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {/* Weekly Progress */}
-      <Card className="rounded-sm border-border/25 bg-gradient-to-br from-indigo-500/10 to-transparent">
+      <Card className="rounded-sm border-border shadow-sm bg-gradient-to-br from-indigo-500/10 to-transparent">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-md bg-indigo-500/20">
@@ -49,7 +49,7 @@ export function InsightCards({ insights, weeklyComparison }: InsightCardsProps) 
       </Card>
       
       {/* Reading Streak */}
-      <Card className="rounded-sm border-border/25 bg-gradient-to-br from-orange-500/10 to-transparent">
+      <Card className="rounded-sm border-border shadow-sm bg-gradient-to-br from-orange-500/10 to-transparent">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-md bg-orange-500/20">
@@ -65,7 +65,7 @@ export function InsightCards({ insights, weeklyComparison }: InsightCardsProps) 
       </Card>
       
       {/* Completion Rate */}
-      <Card className="rounded-sm border-border/25 bg-gradient-to-br from-green-500/10 to-transparent">
+      <Card className="rounded-sm border-border shadow-sm bg-gradient-to-br from-green-500/10 to-transparent">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-md bg-green-500/20">
@@ -81,7 +81,7 @@ export function InsightCards({ insights, weeklyComparison }: InsightCardsProps) 
       </Card>
       
       {/* Avg Pages */}
-      <Card className="rounded-sm border-border/25 bg-gradient-to-br from-purple-500/10 to-transparent">
+      <Card className="rounded-sm border-border shadow-sm bg-gradient-to-br from-purple-500/10 to-transparent">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-md bg-purple-500/20">
@@ -97,7 +97,7 @@ export function InsightCards({ insights, weeklyComparison }: InsightCardsProps) 
       </Card>
       
       {/* Top Genre */}
-      <Card className="rounded-sm border-border/25 bg-gradient-to-br from-pink-500/10 to-transparent">
+      <Card className="rounded-sm border-border shadow-sm bg-gradient-to-br from-pink-500/10 to-transparent">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-md bg-pink-500/20">
@@ -114,7 +114,7 @@ export function InsightCards({ insights, weeklyComparison }: InsightCardsProps) 
       </Card>
       
       {/* Total Books */}
-      <Card className="rounded-sm border-border/25 bg-gradient-to-br from-cyan-500/10 to-transparent">
+      <Card className="rounded-sm border-border bg-gradient-to-br from-cyan-500/10 to-transparent shadow-sm">
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="p-2 rounded-md bg-cyan-500/20">

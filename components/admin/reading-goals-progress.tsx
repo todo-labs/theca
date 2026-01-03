@@ -17,7 +17,7 @@ interface ReadingGoalsProgressProps {
 export function ReadingGoalsProgress({ goals }: ReadingGoalsProgressProps) {
   if (!goals || goals.length === 0) {
     return (
-      <Card className="rounded-sm border-border/25">
+    <Card className="rounded-sm border-border shadow-sm">
         <CardHeader>
           <CardTitle className="text-sm font-bold tracking-wider uppercase">Active Goals</CardTitle>
           <CardDescription>No active reading goals set</CardDescription>

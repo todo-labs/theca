@@ -4,6 +4,7 @@ import { useAnalytics } from "@/hooks/queries/use-analytics";
 import { MonthlyActivityChart } from "@/components/admin/monthly-activity-chart";
 import { ReadingGoalsProgress } from "@/components/admin/reading-goals-progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 
 export default function AdminDashboardPage() {
   const { data, isLoading, isError } = useAnalytics();
@@ -41,26 +42,26 @@ export default function AdminDashboardPage() {
       <h2 className="text-2xl font-bold mb-6 tracking-tight">Dashboard</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="border border-border/25 rounded-sm p-8 hover:border-border/50 transition-colors">
+        <Card className="rounded-sm border-border hover:border-border/80 transition-shadow shadow-sm p-8">
           <h3 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
             Total Books
           </h3>
           <p className="text-4xl font-bold mt-4 tracking-tight">{stats.totalBooks || 0}</p>
-        </div>
+        </Card>
 
-        <div className="border border-border/25 rounded-sm p-8 hover:border-border/50 transition-colors">
+        <Card className="rounded-sm border-border hover:border-border/80 transition-shadow shadow-sm p-8">
           <h3 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
             Currently Reading
           </h3>
           <p className="text-4xl font-bold mt-4 tracking-tight">{stats.currentlyReading || 0}</p>
-        </div>
+        </Card>
 
-        <div className="border border-border/25 rounded-sm p-8 hover:border-border/50 transition-colors">
+        <Card className="rounded-sm border-border hover:border-border/80 transition-shadow shadow-sm p-8">
           <h3 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground/70">
             Pages Read
           </h3>
           <p className="text-4xl font-bold mt-4 tracking-tight">{stats.totalPagesRead || 0}</p>
-        </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

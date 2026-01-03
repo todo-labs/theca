@@ -9,7 +9,7 @@ interface MonthlyActivityChartProps {
 
 export function MonthlyActivityChart({ data }: MonthlyActivityChartProps) {
   return (
-    <Card className="col-span-full lg:col-span-2 rounded-sm border-border/25">
+    <Card className="col-span-full lg:col-span-2 rounded-sm border-border shadow-sm">
       <CardHeader>
         <CardTitle className="text-sm font-bold tracking-wider uppercase">Monthly Reading Activity</CardTitle>
         <CardDescription>Pages read per month over the last 6 months</CardDescription>

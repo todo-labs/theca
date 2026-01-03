@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Book } from "@/lib/domain/books";
 import { toast } from "sonner";
 
 export const wishlistKeys = {
@@ -6,7 +7,7 @@ export const wishlistKeys = {
 };
 
 export function useWishlist() {
-  return useQuery({
+  return useQuery<Book[]>({
     queryKey: wishlistKeys.all,
     queryFn: async () => {
       const res = await fetch("/api/wishlist");
