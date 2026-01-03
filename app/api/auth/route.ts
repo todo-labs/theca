@@ -1,35 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyTOTP } from "@/lib/auth";
-import { createSession, verifySession } from "@/lib/middleware";
+import { verifyTOTP, createJWT, verifyJWT } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json();
 
     if (!token) {
-      return NextResponse.json(
-        { error: "Token is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Token is required" }, { status: 400 });
     }
 
     const isValid = verifyTOTP(token);
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid token" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const sessionToken = await createSession();
+    const sessionToken = await createJWT();
 
+    const sessionTimeoutHours = parseInt(
+      process.env.SESSION_TIMEOUT_HOURS || "24",
+    );
     const response = NextResponse.json({ success: true });
     response.cookies.set("session_token", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 24 * 60 * 60, // 24 hours
+      maxAge: sessionTimeoutHours * 60 * 60,
     });
 
     return response;
@@ -37,7 +33,7 @@ export async function POST(request: NextRequest) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -50,7 +46,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ isAuthenticated: false });
     }
 
-    const isValid = await verifySession(token);
+    const isValid = await verifyJWT(token);
 
     return NextResponse.json({ isAuthenticated: isValid });
   } catch (error) {
@@ -58,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const response = NextResponse.json({ success: true });
     response.cookies.delete("session_token");
@@ -67,7 +63,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
