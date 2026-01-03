@@ -16,7 +16,7 @@ Theca is a premium book management and reading progress tracking application bui
 - **Framework**: [Next.js 15](https://nextjs.org/) (App Router, React 19)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) with [DrizzleORM](https://orm.drizzle.team/)
 - **Data Fetching**: [TanStack Query v5](https://tanstack.com/query/latest)
-- **Authentication**: TOTP (Time-based One-Time Password)
+- **Authentication**: TOTP (Time-based One-Time Password) + JWT (stateless sessions)
 - **AI Integration**: [Vercel AI SDK](https://sdk.vercel.ai/) with [OpenRouter](https://openrouter.ai/)
 - **Search Engine**: [Exa AI](https://exa.ai/) for smart recommendations
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
@@ -35,45 +35,52 @@ Theca is a premium book management and reading progress tracking application bui
 ### Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd theca
    ```
 
 2. **Install dependencies**:
+
    ```bash
    bun install
    ```
 
 3. **Set up environment variables**:
    Create a `.env` file in the root directory:
+
    ```env
-   # Database
-   DATABASE_URL=postgresql://user:password@localhost:5432/theca
-   
-   # TOTP Authentication
-   TOTP_SECRET=your_generated_secret_here
-   
-   # AI Configuration
-   OPENROUTER_API_KEY=your_openrouter_key
-   EXA_API_KEY=your_exa_key
-   
-   # Feature Flags
-   ENABLE_AI_RECOMMENDATIONS=true
-   ENABLE_AI_COVER_EXTRACTION=true
+    # Database
+    DATABASE_URL=postgresql://user:password@localhost:5432/theca
+
+    # Authentication (JWT for sessions, TOTP for login)
+    JWT_SECRET=your_jwt_secret_here # REQUIRED - generate with: openssl rand -base64 32
+    TOTP_SECRET=your_totp_secret_here
+
+    # AI Configuration
+    OPENROUTER_API_KEY=your_openrouter_key
+    EXA_API_KEY=your_exa_key
+
+    # Feature Flags
+    ENABLE_AI_RECOMMENDATIONS=true
+    ENABLE_AI_COVER_EXTRACTION=true
    ```
 
 4. **Initialize the database**:
+
    ```bash
    bun run db:push
    ```
 
 5. **Generate TOTP Secret**:
+
    ```bash
    bun run generate-totp
    ```
 
 6. **Start the development server**:
+
    ```bash
    bun run dev
    ```
@@ -92,14 +99,23 @@ The administrative backend is located at `/admin` and provides tools for:
 - **Reports**: Visualized analytics using Recharts.
 - **Settings**: Comprehensive system and AI configuration.
 
-## TOTP Authentication
+## Authentication
 
-Theca uses industry-standard TOTP authentication. To set up:
+Theca uses a two-layer authentication system:
 
-1. Run `bun run generate-totp` to get a QR code.
-2. Scan the code with your preferred authenticator app.
-3. Save the secret key in your `.env` as `TOTP_SECRET`.
-4. Login at `/admin/login` using the 6-digit code.
+1. **TOTP (Time-based One-Time Password)** - Secure admin login
+   - Run `bun run generate-totp` to get a QR code
+   - Scan with your authenticator app (Google Authenticator, Authy, etc.)
+   - Save the secret in your `.env` as `TOTP_SECRET`
+   - Login at `/admin/login` using the 6-digit code
+
+2. **JWT (JSON Web Tokens)** - Stateless session management
+   - Sessions are stateless JWT tokens stored in httpOnly cookies
+   - Set `JWT_SECRET` in your `.env` (generate with `openssl rand -base64 32`)
+   - No database sessions table needed
+   - Tokens expire after fixed duration (configurable via `SESSION_TIMEOUT_HOURS`)
+
+**Note**: Book covers are fetched from external sources (OpenLibrary, Google Books) rather than uploaded. No blob storage is required.
 
 ## Available Scripts
 
@@ -114,3 +130,8 @@ Theca uses industry-standard TOTP authentication. To set up:
 ## License
 
 This project is private and proprietary.
+
+
+## Roadmap
+- [ ] Advanced ePub support
+- [ ] 

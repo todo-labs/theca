@@ -1,9 +1,17 @@
-import { Resend } from 'resend';
-import { emailTemplates } from './templates/registry';
-import { render } from '@react-email/render';
-import React from 'react';
+import { Resend } from "resend";
+import { emailTemplates } from "./templates/registry";
+import { render } from "@react-email/render";
+import React from "react";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(
+      "RESEND_API_KEY not configured - email functionality disabled",
+    );
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 export type EmailTemplateKey = keyof typeof emailTemplates;
 
@@ -14,12 +22,12 @@ export const emailService = {
   async sendEmail<T extends EmailTemplateKey>(
     to: string,
     templateKey: T,
-    props: Parameters<typeof emailTemplates[T]['component']>[0],
-    options?: { host?: string }
+    props: Parameters<(typeof emailTemplates)[T]["component"]>[0],
+    options?: { host?: string },
   ) {
     const templateConfig = emailTemplates[templateKey];
     const { component: Component, getSubject } = templateConfig;
-    
+
     // @ts-ignore - Component is a valid React component
     const html = await render(React.createElement(Component, props));
     const subject = getSubject(props);
@@ -29,13 +37,19 @@ export const emailService = {
     // 2. Otherwise use the provided host to construct a default
     // 3. Fallback to a hardcoded default
     let from = process.env.EMAIL_FROM;
-    
+
     if (!from && options?.host) {
       from = `Theca <notifications@${options.host}>`;
     }
-    
+
     if (!from) {
-      from = 'Theca <notifications@conceptcodes.dev>';
+      from = "Theca <notifications@conceptcodes.dev>";
+    }
+
+    const resend = getResend();
+    if (!resend) {
+      console.warn("Email service not available - skipping email send");
+      return { success: false, error: "Email service not configured" };
     }
 
     try {
@@ -48,8 +62,8 @@ export const emailService = {
 
       return { success: true, data };
     } catch (error) {
-      console.error('Failed to send email:', error);
+      console.error("Failed to send email:", error);
       return { success: false, error };
     }
-  }
+  },
 };
