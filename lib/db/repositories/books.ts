@@ -68,19 +68,12 @@ export const bookRepository = {
       .returning(),
 
   /**
-   * Updates the cover of a book.
+   * Updates the cover URL of a book.
    */
-  updateCover: (
-    id: number,
-    coverData: { url?: string; path?: string; hash?: string },
-  ) =>
+  updateCover: (id: number, coverUrl: string) =>
     db
       .update(books)
-      .set({
-        coverImageUrl: coverData.url,
-        coverImagePath: coverData.path,
-        coverImageHash: coverData.hash,
-      })
+      .set({ coverImageUrl: coverUrl, updatedAt: sql`now()` })
       .where(eq(books.id, id))
       .returning(),
 
@@ -100,6 +93,97 @@ export const bookRepository = {
       .where(
         sql`${books.title} ILIKE ${"%" + query + "%"} OR ${books.author} ILIKE ${"%" + query + "%"}`,
       ),
+
+  /**
+   * Returns all books in the wishlist, ordered by title alphabetically.
+   */
+  findWishlist: () =>
+    db
+      .select()
+      .from(books)
+      .where(eq(books.isWishlist, true))
+      .orderBy(books.title),
+
+  /**
+   * Returns all books in the wishlist that are visible to the public.
+   */
+  findWishlistPublic: () =>
+    db
+      .select()
+      .from(books)
+      .where(
+        and(eq(books.isWishlist, true), eq(books.isVisiblePublicly, true)),
+      ),
+
+  /**
+   * Moves a book from wishlist to library.
+   */
+  moveToLibrary: (id: number, status: ReadingStatus = "to_read") =>
+    db
+      .update(books)
+      .set({
+        isWishlist: false,
+        readingStatus: status,
+        dateAcquired: sql`now()`,
+        dateAddedToWishlist: sql`null`,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(books.id, id))
+      .returning(),
+
+  /**
+   * Updates wishlist-specific fields for a book.
+   */
+  updateWishlist: (
+    id: number,
+    data: {
+      wishlistPriority?: number;
+      purchaseUrl?: string;
+    },
+  ) =>
+    db
+      .update(books)
+      .set({ ...data, updatedAt: sql`now()` })
+      .where(eq(books.id, id))
+      .returning(),
+
+  /**
+   * Adds a book to the wishlist.
+   */
+  addToWishlist: (
+    id: number,
+    data: {
+      wishlistPriority?: number;
+      purchaseUrl?: string;
+    },
+  ) =>
+    db
+      .update(books)
+      .set({
+        isWishlist: true,
+        dateAddedToWishlist: sql`now()`,
+        ...data,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(books.id, id))
+      .returning(),
+
+  /**
+   * Removes a book from the wishlist.
+   */
+  removeFromWishlist: (id: number) =>
+    db
+      .update(books)
+      .set({
+        isWishlist: false,
+        wishlistPriority: sql`null`,
+        purchaseUrl: sql`null`,
+        dateAddedToWishlist: sql`null`,
+        dateAcquired: sql`null`,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(books.id, id))
+      .returning(),
 };
 
 export const readingProgressRepository = {

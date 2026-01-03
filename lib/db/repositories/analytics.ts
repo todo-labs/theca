@@ -8,12 +8,14 @@ export const analyticsRepository = {
     const [currentlyReading] = await db
       .select({ count: count() })
       .from(books)
-      .where(eq(books.readingStatus, "currently_reading"));
-    
+      .where(eq(books.readingStatus, "in_progress"));
+
     // Simple streak calculation (placeholder or actual query if streak table used)
     // For now returning mock/placeholder based on reading progress
     const [pagesRead] = await db
-      .select({ sum: sql<number>`COALESCE(SUM(${readingProgress.pagesRead}), 0)` })
+      .select({
+        sum: sql<number>`COALESCE(SUM(${readingProgress.pagesRead}), 0)`,
+      })
       .from(readingProgress);
 
     return {
@@ -61,10 +63,10 @@ export const analyticsRepository = {
       GROUP BY DATE_TRUNC('day', rp.date)
       ORDER BY date ASC
     `)) as any[];
-    return result.map(row => ({
+    return result.map((row) => ({
       ...row,
       date: new Date(row.date as string),
-      books: row.books || []
+      books: row.books || [],
     }));
   },
 
@@ -84,9 +86,9 @@ export const analyticsRepository = {
       })
       .from(books)
       .groupBy(books.readingStatus);
-    
-    return result.map(row => ({
-      status: row.status || 'unknown',
+
+    return result.map((row) => ({
+      status: row.status || "unknown",
       count: Number(row.count),
     }));
   },
@@ -102,8 +104,8 @@ export const analyticsRepository = {
       GROUP BY DATE_TRUNC('day', date)
       ORDER BY date ASC
     `)) as any[];
-    
-    return result.map(row => ({
+
+    return result.map((row) => ({
       date: new Date(row.date as string),
       pages: Number(row.pages || 0),
     }));
@@ -127,12 +129,15 @@ export const analyticsRepository = {
         (SELECT pages FROM current_week) as current_pages,
         (SELECT pages FROM last_week) as last_pages
     `)) as any[];
-    
+
     const data = result[0] || { current_pages: 0, last_pages: 0 };
     const currentPages = Number(data.current_pages || 0);
     const lastPages = Number(data.last_pages || 0);
-    const change = lastPages === 0 ? 0 : Math.round(((currentPages - lastPages) / lastPages) * 100);
-    
+    const change =
+      lastPages === 0
+        ? 0
+        : Math.round(((currentPages - lastPages) / lastPages) * 100);
+
     return {
       currentWeekPages: currentPages,
       lastWeekPages: lastPages,
@@ -146,14 +151,14 @@ export const analyticsRepository = {
     const [completedBooksResult] = await db
       .select({ count: count() })
       .from(books)
-      .where(eq(books.readingStatus, "completed"));
-    
+      .where(eq(books.readingStatus, "read"));
+
     // Average pages per reading session
     const [avgPagesResult] = (await db.execute(sql`
       SELECT COALESCE(AVG(pages_read), 0)::INTEGER as avg_pages
       FROM reading_progress
     `)) as any[];
-    
+
     // Most read genre
     const topGenreResult = (await db.execute(sql`
       SELECT genre, COUNT(*)::INTEGER as count
@@ -163,7 +168,7 @@ export const analyticsRepository = {
       ORDER BY count DESC
       LIMIT 1
     `)) as any[];
-    
+
     // Reading streak (consecutive days with reading activity)
     const streakResult = (await db.execute(sql`
       WITH daily_reads AS (
@@ -182,15 +187,20 @@ export const analyticsRepository = {
       FROM streak_calc
       WHERE grp = (SELECT grp FROM streak_calc WHERE read_date = CURRENT_DATE LIMIT 1)
     `)) as any[];
-    
+
     return {
       totalBooks: Number(totalBooksResult.count),
       completedBooks: Number(completedBooksResult.count),
-      completionRate: totalBooksResult.count > 0 
-        ? Math.round((Number(completedBooksResult.count) / Number(totalBooksResult.count)) * 100) 
-        : 0,
+      completionRate:
+        totalBooksResult.count > 0
+          ? Math.round(
+              (Number(completedBooksResult.count) /
+                Number(totalBooksResult.count)) *
+                100,
+            )
+          : 0,
       avgPagesPerSession: Number(avgPagesResult?.avg_pages || 0),
-      topGenre: topGenreResult[0]?.genre || 'N/A',
+      topGenre: topGenreResult[0]?.genre || "N/A",
       currentStreak: Number(streakResult[0]?.streak || 0),
     };
   },
