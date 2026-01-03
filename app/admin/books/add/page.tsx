@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   Camera,
   Library,
   ArrowRight,
@@ -16,7 +16,8 @@ import {
   ImagePlus,
   CheckCircle2,
   AlertCircle,
-  Zap
+  Zap,
+  PauseCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -25,7 +26,13 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 type Mode = "select" | "single-photo" | "bulk";
-type BookStatus = "pending" | "identifying" | "identified" | "adding" | "added" | "error";
+type BookStatus =
+  | "pending"
+  | "identifying"
+  | "identified"
+  | "adding"
+  | "added"
+  | "error";
 
 interface QueuedBook {
   id: string;
@@ -62,44 +69,52 @@ export default function AddBooksPage() {
     return response.json();
   };
 
-  const handleSinglePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSinglePhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const id = crypto.randomUUID();
     const preview = URL.createObjectURL(file);
-    
+
     const newBook: QueuedBook = {
       id,
       file,
       preview,
       status: "identifying",
     };
-    
+
     setQueue([newBook]);
 
     try {
       const result = await identifyBook(newBook);
-      
+
       if (result.identified) {
-        setQueue([{
-          ...newBook,
-          status: "identified",
-          bookData: result.book,
-        }]);
+        setQueue([
+          {
+            ...newBook,
+            status: "identified",
+            bookData: result.book,
+          },
+        ]);
       } else {
-        setQueue([{
-          ...newBook,
-          status: "error",
-          error: result.message || "Could not identify book",
-        }]);
+        setQueue([
+          {
+            ...newBook,
+            status: "error",
+            error: result.message || "Could not identify book",
+          },
+        ]);
       }
     } catch (error) {
-      setQueue([{
-        ...newBook,
-        status: "error",
-        error: "Failed to process image",
-      }]);
+      setQueue([
+        {
+          ...newBook,
+          status: "error",
+          error: "Failed to process image",
+        },
+      ]);
     }
   };
 
@@ -119,79 +134,97 @@ export default function AddBooksPage() {
 
   const processQueue = async () => {
     setIsProcessing(true);
-    
+
     for (let i = 0; i < queue.length; i++) {
       const book = queue[i];
       if (book.status !== "pending") continue;
 
       // Update status to identifying
-      setQueue(prev => prev.map((b, idx) => 
-        idx === i ? { ...b, status: "identifying" as BookStatus } : b
-      ));
+      setQueue((prev) =>
+        prev.map((b, idx) =>
+          idx === i ? { ...b, status: "identifying" as BookStatus } : b,
+        ),
+      );
 
       try {
         const result = await identifyBook(book);
-        
-        setQueue(prev => prev.map((b, idx) => 
-          idx === i ? {
-            ...b,
-            status: result.identified ? "identified" : "error",
-            bookData: result.identified ? result.book : undefined,
-            error: !result.identified ? result.message : undefined,
-          } : b
-        ));
+
+        setQueue((prev) =>
+          prev.map((b, idx) =>
+            idx === i
+              ? {
+                  ...b,
+                  status: result.identified ? "identified" : "error",
+                  bookData: result.identified ? result.book : undefined,
+                  error: !result.identified ? result.message : undefined,
+                }
+              : b,
+          ),
+        );
       } catch (error) {
-        setQueue(prev => prev.map((b, idx) => 
-          idx === i ? {
-            ...b,
-            status: "error",
-            error: "Failed to identify",
-          } : b
-        ));
+        setQueue((prev) =>
+          prev.map((b, idx) =>
+            idx === i
+              ? {
+                  ...b,
+                  status: "error",
+                  error: "Failed to identify",
+                }
+              : b,
+          ),
+        );
       }
 
       // Small delay between requests
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
     }
 
     setIsProcessing(false);
   };
 
   const addBookFromQueue = async (bookId: string, status: string) => {
-    const book = queue.find(b => b.id === bookId);
+    const book = queue.find((b) => b.id === bookId);
     if (!book?.bookData) return;
 
-    setQueue(prev => prev.map(b => 
-      b.id === bookId ? { ...b, status: "adding" as BookStatus } : b
-    ));
+    setQueue((prev) =>
+      prev.map((b) =>
+        b.id === bookId ? { ...b, status: "adding" as BookStatus } : b,
+      ),
+    );
 
     try {
       await createBook.mutateAsync({
         ...book.bookData,
         readingStatus: status,
       });
-      
-      setQueue(prev => prev.map(b => 
-        b.id === bookId ? { ...b, status: "added" as BookStatus } : b
-      ));
-      
+
+      setQueue((prev) =>
+        prev.map((b) =>
+          b.id === bookId ? { ...b, status: "added" as BookStatus } : b,
+        ),
+      );
+
       toast.success(`Added "${book.bookData.title}"`);
     } catch (error) {
-      setQueue(prev => prev.map(b => 
-        b.id === bookId ? { ...b, status: "error", error: "Failed to add" } : b
-      ));
+      setQueue((prev) =>
+        prev.map((b) =>
+          b.id === bookId
+            ? { ...b, status: "error", error: "Failed to add" }
+            : b,
+        ),
+      );
     }
   };
 
   const removeFromQueue = (bookId: string) => {
-    setQueue(prev => prev.filter(b => b.id !== bookId));
+    setQueue((prev) => prev.filter((b) => b.id !== bookId));
   };
 
   const addAllIdentified = async () => {
-    const identifiedBooks = queue.filter(b => b.status === "identified");
-    
+    const identifiedBooks = queue.filter((b) => b.status === "identified");
+
     for (const book of identifiedBooks) {
-      await addBookFromQueue(book.id, "want_to_read");
+      await addBookFromQueue(book.id, "to_read");
     }
   };
 
@@ -261,7 +294,7 @@ export default function AddBooksPage() {
                   whileTap={{ scale: 0.98 }}
                   className={cn(
                     "group relative p-8 rounded-3xl border border-border/50 bg-gradient-to-br transition-all hover:border-primary/50 hover:shadow-xl",
-                    option.color
+                    option.color,
                   )}
                 >
                   <div className="flex flex-col items-center text-center space-y-4">
@@ -269,7 +302,9 @@ export default function AddBooksPage() {
                       <option.icon className="w-8 h-8 text-primary" />
                     </div>
                     <h3 className="text-xl font-semibold">{option.title}</h3>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {option.description}
+                    </p>
                   </div>
                   <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.button>
@@ -288,7 +323,7 @@ export default function AddBooksPage() {
             className="flex-1 max-w-2xl mx-auto w-full"
           >
             {queue.length === 0 ? (
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 className="flex flex-col items-center justify-center p-16 rounded-3xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors cursor-pointer bg-muted/20"
               >
@@ -310,7 +345,10 @@ export default function AddBooksPage() {
             ) : (
               <div className="space-y-6">
                 {queue.map((book) => (
-                  <div key={book.id} className="flex gap-6 p-6 rounded-2xl bg-muted/30 border border-border/50">
+                  <div
+                    key={book.id}
+                    className="flex gap-6 p-6 rounded-2xl bg-muted/30 border border-border/50"
+                  >
                     <div className="shrink-0">
                       <div className="w-32 aspect-[2/3] rounded-lg overflow-hidden shadow-xl border border-border/50">
                         <img
@@ -324,10 +362,12 @@ export default function AddBooksPage() {
                       {book.status === "identifying" && (
                         <div className="flex items-center gap-3 h-full">
                           <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                          <span className="text-muted-foreground">Identifying book...</span>
+                          <span className="text-muted-foreground">
+                            Identifying book...
+                          </span>
                         </div>
                       )}
-                      
+
                       {book.status === "identified" && book.bookData && (
                         <div className="space-y-4">
                           <div>
@@ -335,22 +375,44 @@ export default function AddBooksPage() {
                               <CheckCircle2 className="w-3 h-3" />
                               Identified
                             </div>
-                            <h2 className="text-xl font-serif mt-1">{book.bookData.title}</h2>
-                            <p className="text-muted-foreground">{book.bookData.author}</p>
+                            <h2 className="text-xl font-serif mt-1">
+                              {book.bookData.title}
+                            </h2>
+                            <p className="text-muted-foreground">
+                              {book.bookData.author}
+                            </p>
                           </div>
                           <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground">Select reading status:</p>
-                            <div className="grid grid-cols-3 gap-2">
+                            <p className="text-xs text-muted-foreground">
+                              Select reading status:
+                            </p>
+                            <div className="grid grid-cols-5 gap-2">
                               {[
-                                { id: "want_to_read", label: "Want to Read", icon: BookOpen },
-                                { id: "currently_reading", label: "Reading", icon: RotateCcw },
-                                { id: "completed", label: "Finished", icon: Check },
+                                {
+                                  id: "to_read",
+                                  label: "Want to Read",
+                                  icon: BookOpen,
+                                },
+                                {
+                                  id: "in_progress",
+                                  label: "Reading",
+                                  icon: RotateCcw,
+                                },
+                                { id: "read", label: "Finished", icon: Check },
+                                {
+                                  id: "paused",
+                                  label: "Paused",
+                                  icon: PauseCircle,
+                                },
+                                { id: "dnf", label: "Did Not Finish", icon: X },
                               ].map((s) => (
                                 <Button
                                   key={s.id}
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => addBookFromQueue(book.id, s.id)}
+                                  onClick={() =>
+                                    addBookFromQueue(book.id, s.id)
+                                  }
                                   className="text-xs flex-col h-auto py-2"
                                 >
                                   <s.icon className="w-4 h-4 mb-1" />
@@ -365,7 +427,9 @@ export default function AddBooksPage() {
                       {book.status === "added" && (
                         <div className="flex items-center gap-3 h-full">
                           <CheckCircle2 className="w-5 h-5 text-green-500" />
-                          <span className="text-green-600">Added to library!</span>
+                          <span className="text-green-600">
+                            Added to library!
+                          </span>
                         </div>
                       )}
 
@@ -402,14 +466,16 @@ export default function AddBooksPage() {
             className="flex-1 max-w-4xl mx-auto w-full"
           >
             {queue.length === 0 ? (
-              <div 
+              <div
                 onClick={() => bulkInputRef.current?.click()}
                 className="flex flex-col items-center justify-center p-16 rounded-3xl border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors cursor-pointer bg-muted/20"
               >
                 <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                   <ImagePlus className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-medium mb-2">Upload Multiple Book Covers</h3>
+                <h3 className="text-xl font-medium mb-2">
+                  Upload Multiple Book Covers
+                </h3>
                 <p className="text-muted-foreground text-center max-w-sm">
                   Select multiple images to import your books in batch
                 </p>
@@ -428,18 +494,25 @@ export default function AddBooksPage() {
                 <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50">
                   <div className="flex items-center gap-4">
                     <div className="text-sm">
-                      <span className="font-medium">{queue.filter(b => b.status === "added").length}</span>
-                      <span className="text-muted-foreground"> of {queue.length} added</span>
+                      <span className="font-medium">
+                        {queue.filter((b) => b.status === "added").length}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        of {queue.length} added
+                      </span>
                     </div>
                     <div className="h-2 w-48 bg-muted rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-primary transition-all"
-                        style={{ width: `${(queue.filter(b => b.status === "added").length / queue.length) * 100}%` }}
+                        style={{
+                          width: `${(queue.filter((b) => b.status === "added").length / queue.length) * 100}%`,
+                        }}
                       />
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {queue.some(b => b.status === "pending") && (
+                    {queue.some((b) => b.status === "pending") && (
                       <Button
                         onClick={processQueue}
                         disabled={isProcessing}
@@ -453,7 +526,7 @@ export default function AddBooksPage() {
                         Process All
                       </Button>
                     )}
-                    {queue.some(b => b.status === "identified") && (
+                    {queue.some((b) => b.status === "identified") && (
                       <Button
                         onClick={addAllIdentified}
                         variant="outline"
@@ -469,14 +542,18 @@ export default function AddBooksPage() {
                 {/* Queue Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {queue.map((book) => (
-                    <div 
-                      key={book.id} 
+                    <div
+                      key={book.id}
                       className={cn(
                         "relative rounded-xl overflow-hidden border transition-all",
-                        book.status === "added" && "border-green-500/50 bg-green-500/5",
-                        book.status === "error" && "border-red-500/50 bg-red-500/5",
+                        book.status === "added" &&
+                          "border-green-500/50 bg-green-500/5",
+                        book.status === "error" &&
+                          "border-red-500/50 bg-red-500/5",
                         book.status === "identifying" && "border-primary/50",
-                        (book.status === "pending" || book.status === "identified") && "border-border/50"
+                        (book.status === "pending" ||
+                          book.status === "identified") &&
+                          "border-border/50",
                       )}
                     >
                       <div className="aspect-[2/3] relative">
@@ -485,24 +562,32 @@ export default function AddBooksPage() {
                           alt="Book cover"
                           className="w-full h-full object-cover"
                         />
-                        
+
                         {/* Status overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        
+
                         <div className="absolute bottom-0 left-0 right-0 p-3">
                           {book.status === "pending" && (
-                            <span className="text-xs text-white/70">Pending</span>
+                            <span className="text-xs text-white/70">
+                              Pending
+                            </span>
                           )}
                           {book.status === "identifying" && (
                             <div className="flex items-center gap-2">
                               <Loader2 className="w-3 h-3 animate-spin text-white" />
-                              <span className="text-xs text-white">Identifying...</span>
+                              <span className="text-xs text-white">
+                                Identifying...
+                              </span>
                             </div>
                           )}
                           {book.status === "identified" && book.bookData && (
                             <div>
-                              <p className="text-sm font-medium text-white truncate">{book.bookData.title}</p>
-                              <p className="text-xs text-white/70 truncate">{book.bookData.author}</p>
+                              <p className="text-sm font-medium text-white truncate">
+                                {book.bookData.title}
+                              </p>
+                              <p className="text-xs text-white/70 truncate">
+                                {book.bookData.author}
+                              </p>
                             </div>
                           )}
                           {book.status === "added" && (
@@ -533,7 +618,7 @@ export default function AddBooksPage() {
                         <div className="p-2 bg-muted/50">
                           <Button
                             size="sm"
-                            onClick={() => addBookFromQueue(book.id, "want_to_read")}
+                            onClick={() => addBookFromQueue(book.id, "to_read")}
                             className="w-full h-7 text-xs"
                           >
                             <Plus className="w-3 h-3 mr-1" />
@@ -550,7 +635,9 @@ export default function AddBooksPage() {
                     className="aspect-[2/3] rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
                   >
                     <Plus className="w-8 h-8 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Add more</span>
+                    <span className="text-sm text-muted-foreground">
+                      Add more
+                    </span>
                   </button>
                 </div>
               </div>

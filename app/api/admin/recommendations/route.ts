@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/middleware";
-import { aiRecommendationsRepository, userRecommendationsRepository } from "@/lib/db/repositories/recommendations-repository";
+import { aiRecommendationsRepository, userRecommendationsRepository } from "@/lib/db/repositories/recommendations";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);

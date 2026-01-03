@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   bookRepository,
   NewBook,
-} from "@/lib/db/repositories/books-repository";
-import { books, ReadingStatus } from "@/lib/db/schema";
+} from "@/lib/db/repositories/books";
+import { ReadingStatus } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/middleware";
 
 export async function GET(request: NextRequest) {
@@ -45,9 +45,7 @@ export async function POST(request: NextRequest) {
       pageCount: body.pageCount || null,
       description: body.description || null,
       coverImageUrl: body.coverImageUrl || null,
-      coverImagePath: body.coverImagePath || null,
-      coverImageHash: body.coverImageHash || null,
-      readingStatus: (body.readingStatus as ReadingStatus) || "want_to_read",
+      readingStatus: (body.readingStatus as ReadingStatus) || "to_read",
       personalRating: body.personalRating || null,
       personalNotes: body.personalNotes || null,
       dateAdded: new Date(),
@@ -59,6 +57,8 @@ export async function POST(request: NextRequest) {
       lastAiRefreshed: body.lastAiRefreshed
         ? new Date(body.lastAiRefreshed)
         : null,
+      isWishlist: body.isWishlist || false,
+      dateAddedToWishlist: body.isWishlist ? new Date() : null,
     };
 
     const [createdBook] = await bookRepository.create(newBook);

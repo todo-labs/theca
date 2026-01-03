@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { bookRepository } from "@/lib/db/repositories/books-repository";
+import { bookRepository } from "@/lib/db/repositories/books";
 import { ReadingStatus } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/middleware";
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     console.error("Error fetching book:", error);
     return NextResponse.json(
       { error: "Failed to fetch book" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -63,25 +63,35 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (body.isbn !== undefined) updateData.isbn = body.isbn;
     if (body.genre !== undefined) updateData.genre = body.genre;
     if (body.themes !== undefined) updateData.themes = body.themes;
-    if (body.publicationYear !== undefined) updateData.publicationYear = body.publicationYear;
+    if (body.publicationYear !== undefined)
+      updateData.publicationYear = body.publicationYear;
     if (body.publisher !== undefined) updateData.publisher = body.publisher;
     if (body.pageCount !== undefined) updateData.pageCount = body.pageCount;
-    if (body.description !== undefined) updateData.description = body.description;
-    if (body.coverImageUrl !== undefined) updateData.coverImageUrl = body.coverImageUrl;
-    if (body.coverImagePath !== undefined) updateData.coverImagePath = body.coverImagePath;
-    if (body.coverImageHash !== undefined) updateData.coverImageHash = body.coverImageHash;
-    if (body.readingStatus !== undefined) updateData.readingStatus = body.readingStatus as ReadingStatus;
-    if (body.personalRating !== undefined) updateData.personalRating = body.personalRating;
-    if (body.personalNotes !== undefined) updateData.personalNotes = body.personalNotes;
-    if (body.currentPage !== undefined) updateData.currentPage = body.currentPage;
-    if (body.isVisiblePublicly !== undefined) updateData.isVisiblePublicly = body.isVisiblePublicly;
+    if (body.description !== undefined)
+      updateData.description = body.description;
+    if (body.coverImageUrl !== undefined)
+      updateData.coverImageUrl = body.coverImageUrl;
+    if (body.readingStatus !== undefined)
+      updateData.readingStatus = body.readingStatus as ReadingStatus;
+    if (body.personalRating !== undefined)
+      updateData.personalRating = body.personalRating;
+    if (body.personalNotes !== undefined)
+      updateData.personalNotes = body.personalNotes;
+    if (body.currentPage !== undefined)
+      updateData.currentPage = body.currentPage;
+    if (body.isVisiblePublicly !== undefined)
+      updateData.isVisiblePublicly = body.isVisiblePublicly;
 
     // Date fields
     if (body.dateStarted !== undefined) {
-      updateData.dateStarted = body.dateStarted ? new Date(body.dateStarted) : null;
+      updateData.dateStarted = body.dateStarted
+        ? new Date(body.dateStarted)
+        : null;
     }
     if (body.dateFinished !== undefined) {
-      updateData.dateFinished = body.dateFinished ? new Date(body.dateFinished) : null;
+      updateData.dateFinished = body.dateFinished
+        ? new Date(body.dateFinished)
+        : null;
     }
 
     const [updatedBook] = await bookRepository.update(bookId, updateData);
@@ -95,7 +105,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     console.error("Error updating book:", error);
     return NextResponse.json(
       { error: "Failed to update book" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -125,7 +135,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     console.error("Error deleting book:", error);
     return NextResponse.json(
       { error: "Failed to delete book" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

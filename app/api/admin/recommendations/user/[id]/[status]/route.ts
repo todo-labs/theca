@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/middleware";
-import { userRecommendationsRepository } from "@/lib/db/repositories/recommendations-repository";
+import { userRecommendationsRepository } from "@/lib/db/repositories/recommendations";
 import { RecommendationStatus } from "@/lib/db/schema";
 
 export async function POST(

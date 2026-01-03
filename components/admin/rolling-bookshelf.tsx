@@ -5,25 +5,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { X, ChevronRight, Edit2, Trash2 } from "lucide-react";
 import { BookMetadata } from "@/components/book/book-metadata";
-import { useBooks, Book } from "@/hooks/queries/use-books";
-import { EditBookModal } from "@/components/modals/edit-book-modal";
+import { useAdminBooks } from "@/hooks/queries/use-admin-books";
+import { Book } from "@/lib/domain/books";
+import { EditBookModal } from "@/components/modals/edit-book";
 import { Button } from "@/components/ui/button";
 import { ExpandableDescription } from "@/components/ui/expandable-description";
 import { CopyButton } from "@/components/ui/copy-button";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { bookKeys } from "@/hooks/queries/use-books";
+import { adminBookKeys } from "@/hooks/queries/use-admin-books";
 
 export function RollingBookshelf() {
-  const { data: books = [], isLoading: loading } = useBooks();
+  const { data: adminBooks = [], isLoading: loading } = useAdminBooks();
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
 
   const groupedBooks = {
-    currentlyReading: books.filter(
-      (b) => b.readingStatus === "currently_reading",
+    currentlyReading: adminBooks.filter(
+      (b: Book) => b.readingStatus === "in_progress",
     ),
-    nextUp: books.filter((b) => b.readingStatus === "want_to_read"),
-    finished: books.filter((b) => b.readingStatus === "completed"),
+    nextUp: adminBooks.filter((b: Book) => b.readingStatus === "to_read"),
+    finished: adminBooks.filter((b: Book) => b.readingStatus === "read"),
+    paused: adminBooks.filter((b: Book) => b.readingStatus === "paused"),
+    dnf: adminBooks.filter((b: Book) => b.readingStatus === "dnf"),
   };
 
   const handleBookClick = (book: Book) => {
@@ -66,6 +69,20 @@ export function RollingBookshelf() {
           books={groupedBooks.finished}
           onBookClick={handleBookClick}
           showViewAll
+        />
+
+        {/* Paused Section */}
+        <BookSection
+          title="Paused"
+          books={groupedBooks.paused}
+          onBookClick={handleBookClick}
+        />
+
+        {/* Did Not Finish Section */}
+        <BookSection
+          title="Did Not Finish"
+          books={groupedBooks.dnf}
+          onBookClick={handleBookClick}
         />
       </div>
 
@@ -131,7 +148,9 @@ export function RollingBookshelf() {
                     </div>
 
                     {selectedBook.description && (
-                      <ExpandableDescription description={selectedBook.description} />
+                      <ExpandableDescription
+                        description={selectedBook.description}
+                      />
                     )}
 
                     {(selectedBook.publisher ||
@@ -168,15 +187,15 @@ export function RollingBookshelf() {
                               : []),
                             ...(selectedBook.isbn
                               ? [
-                                  { 
-                                    label: "ISBN", 
+                                  {
+                                    label: "ISBN",
                                     value: (
                                       <div className="flex items-center gap-2">
                                         <span>{selectedBook.isbn}</span>
                                         <CopyButton value={selectedBook.isbn} />
                                       </div>
-                                    ) 
-                                  }
+                                    ),
+                                  },
                                 ]
                               : []),
                           ]}
@@ -196,8 +215,8 @@ export function RollingBookshelf() {
                         }
                         onSuccess={() => setSelectedBook(null)}
                       />
-                      <DeleteBookButton 
-                        bookId={selectedBook.id} 
+                      <DeleteBookButton
+                        bookId={selectedBook.id}
                         bookTitle={selectedBook.title}
                         onSuccess={() => setSelectedBook(null)}
                       />
@@ -291,7 +310,11 @@ interface DeleteBookButtonProps {
   onSuccess?: () => void;
 }
 
-function DeleteBookButton({ bookId, bookTitle, onSuccess }: DeleteBookButtonProps) {
+function DeleteBookButton({
+  bookId,
+  bookTitle,
+  onSuccess,
+}: DeleteBookButtonProps) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
 
@@ -306,7 +329,7 @@ function DeleteBookButton({ bookId, bookTitle, onSuccess }: DeleteBookButtonProp
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: bookKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminBookKeys.all });
       toast.success(`"${bookTitle}" deleted from library`);
       onSuccess?.();
     },
