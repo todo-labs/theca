@@ -8,12 +8,18 @@ import { Sidebar } from "@/components/bookshelf/sidebar";
 import { EmptyLibrary } from "@/components/empty-library";
 import { useBooks } from "@/hooks/queries/use-books";
 
+import { CopyButton } from "@/components/ui/copy-button";
+
 export default function BookListingPage() {
   const { data: books = [], isLoading: loading } = useBooks();
+  
+  // Sort books alphabetically by title
+  const sortedBooks = [...books].sort((a, b) => a.title.localeCompare(b.title));
+  
   const [selectedBookIndex, setSelectedBookIndex] = useState(0);
   const sidebarItemsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-  const selectedBook = books.length > 0 ? books[selectedBookIndex] : null;
+  const selectedBook = sortedBooks.length > 0 ? sortedBooks[selectedBookIndex] : null;
 
   const handleBookSelect = (index: number) => {
     setSelectedBookIndex(index);
@@ -42,34 +48,41 @@ export default function BookListingPage() {
 
             <div className="hidden lg:block bg-border/40" />
 
-            <BookDetails
-              title={selectedBook?.title || ""}
-              author={selectedBook?.author || ""}
-              description={selectedBook?.description || ""}
-              metadata={[
-                selectedBook?.publisher && {
-                  label: "Publisher",
-                  value: selectedBook.publisher,
-                },
-                selectedBook?.publicationYear && {
-                  label: "Year",
-                  value: String(selectedBook.publicationYear),
-                },
-                selectedBook?.pageCount && {
-                  label: "Pages",
-                  value: String(selectedBook.pageCount),
-                },
-                selectedBook?.isbn && {
-                  label: "ISBN",
-                  value: selectedBook.isbn,
-                },
-              ].filter(Boolean) as { label: string; value: string }[]}
-            />
+            <div className="h-full overflow-y-auto">
+              <BookDetails
+                title={selectedBook?.title || ""}
+                author={selectedBook?.author || ""}
+                description={selectedBook?.description || ""}
+                metadata={[
+                  selectedBook?.publisher && {
+                    label: "Publisher",
+                    value: selectedBook.publisher,
+                  },
+                  selectedBook?.publicationYear && {
+                    label: "Year",
+                    value: String(selectedBook.publicationYear),
+                  },
+                  selectedBook?.pageCount && {
+                    label: "Pages",
+                    value: String(selectedBook.pageCount),
+                  },
+                  selectedBook?.isbn && {
+                    label: "ISBN",
+                    value: (
+                      <div className="flex items-center gap-2">
+                        <span>{selectedBook.isbn}</span>
+                        <CopyButton value={selectedBook.isbn} />
+                      </div>
+                    ),
+                  },
+                ].filter(Boolean) as { label: string; value: React.ReactNode }[]}
+              />
+            </div>
 
             <div className="hidden lg:block bg-border/40" />
 
             <Sidebar
-              books={books.map((book: any) => ({
+              books={sortedBooks.map((book: any) => ({
                 id: String(book.id),
                 coverSrc: book.coverImageUrl || "/images/fantasy-cover.png",
                 coverAlt: book.title || "Book cover",

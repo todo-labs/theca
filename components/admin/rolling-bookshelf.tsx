@@ -3,9 +3,16 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, Edit2, Trash2 } from "lucide-react";
 import { BookMetadata } from "@/components/book/book-metadata";
 import { useBooks, Book } from "@/hooks/queries/use-books";
+import { EditBookModal } from "@/components/modals/edit-book-modal";
+import { Button } from "@/components/ui/button";
+import { ExpandableDescription } from "@/components/ui/expandable-description";
+import { CopyButton } from "@/components/ui/copy-button";
+import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { bookKeys } from "@/hooks/queries/use-books";
 
 export function RollingBookshelf() {
   const { data: books = [], isLoading: loading } = useBooks();
@@ -124,9 +131,7 @@ export function RollingBookshelf() {
                     </div>
 
                     {selectedBook.description && (
-                      <div className="space-y-5 text-[13px] leading-[1.7] text-muted-foreground/85">
-                        {selectedBook.description}
-                      </div>
+                      <ExpandableDescription description={selectedBook.description} />
                     )}
 
                     {(selectedBook.publisher ||
@@ -162,12 +167,41 @@ export function RollingBookshelf() {
                                 ]
                               : []),
                             ...(selectedBook.isbn
-                              ? [{ label: "ISBN", value: selectedBook.isbn }]
+                              ? [
+                                  { 
+                                    label: "ISBN", 
+                                    value: (
+                                      <div className="flex items-center gap-2">
+                                        <span>{selectedBook.isbn}</span>
+                                        <CopyButton value={selectedBook.isbn} />
+                                      </div>
+                                    ) 
+                                  }
+                                ]
                               : []),
                           ]}
                         />
                       </>
                     )}
+
+                    {/* Action Buttons */}
+                    <div className="border-t border-border/30 pt-6 flex gap-3">
+                      <EditBookModal
+                        book={selectedBook}
+                        trigger={
+                          <Button variant="outline" className="flex-1">
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit Details
+                          </Button>
+                        }
+                        onSuccess={() => setSelectedBook(null)}
+                      />
+                      <DeleteBookButton 
+                        bookId={selectedBook.id} 
+                        bookTitle={selectedBook.title}
+                        onSuccess={() => setSelectedBook(null)}
+                      />
+                    </div>
                   </div>
                 </section>
               </div>
@@ -248,5 +282,69 @@ function BookSection({
         <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-b from-muted/40 to-muted/60 rounded-sm shadow-inner" />
       </div>
     </section>
+  );
+}
+
+interface DeleteBookButtonProps {
+  bookId: number;
+  bookTitle: string;
+  onSuccess?: () => void;
+}
+
+function DeleteBookButton({ bookId, bookTitle, onSuccess }: DeleteBookButtonProps) {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+
+  const deleteBook = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/books/${bookId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete book");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookKeys.all });
+      toast.success(`"${bookTitle}" deleted from library`);
+      onSuccess?.();
+    },
+    onError: () => {
+      toast.error("Failed to delete book");
+    },
+  });
+
+  if (confirming) {
+    return (
+      <div className="flex gap-2">
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => deleteBook.mutate()}
+          disabled={deleteBook.isPending}
+        >
+          Confirm Delete
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setConfirming(false)}
+        >
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+      onClick={() => setConfirming(true)}
+    >
+      <Trash2 className="w-4 h-4 mr-2" />
+      Delete
+    </Button>
   );
 }

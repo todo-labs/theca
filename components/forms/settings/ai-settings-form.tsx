@@ -30,8 +30,6 @@ export function AISettingsForm() {
       enableDiscovery: true,
       refreshFrequency: "daily",
       maxSuggestions: 10,
-      visionModel: "google/gemini-2.0-flash-001",
-      chatModel: "google/gemini-2.0-flash-001",
       autoApproveRecommendations: false,
     },
   })
@@ -108,30 +106,6 @@ export function AISettingsForm() {
               </FieldDescription>
               <FieldError errors={[{ message: form.formState.errors.maxSuggestions?.message }]} />
             </Field>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field>
-                <FieldLabel htmlFor="visionModel">Vision Model</FieldLabel>
-                <Input
-                  id="visionModel"
-                  {...form.register("visionModel")}
-                />
-                <FieldDescription>
-                  Model used for cover photo analysis.
-                </FieldDescription>
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="chatModel">Chat Model</FieldLabel>
-                <Input
-                  id="chatModel"
-                  {...form.register("chatModel")}
-                />
-                <FieldDescription>
-                  Model used for recommendation reasoning.
-                </FieldDescription>
-              </Field>
-            </div>
 
             <Field orientation="horizontal">
               <div className="flex flex-col gap-1.5 flex-1">

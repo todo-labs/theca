@@ -42,7 +42,7 @@ export const readingGoalsRepository = {
   update: (id: number, data: Partial<NewReadingGoal>) =>
     db
       .update(readingGoals)
-      .set({ ...data, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ ...data, updatedAt: sql`now()` })
       .where(eq(readingGoals.id, id))
       .returning(),
 
@@ -52,7 +52,7 @@ export const readingGoalsRepository = {
   updateProgress: (id: number, currentProgress: number) =>
     db
       .update(readingGoals)
-      .set({ currentProgress, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ currentProgress, updatedAt: sql`now()` })
       .where(eq(readingGoals.id, id))
       .returning(),
 
@@ -62,7 +62,7 @@ export const readingGoalsRepository = {
   deactivate: (id: number) =>
     db
       .update(readingGoals)
-      .set({ isActive: false, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ isActive: false, updatedAt: sql`now()` })
       .where(eq(readingGoals.id, id))
       .returning(),
 

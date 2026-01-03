@@ -1,4 +1,4 @@
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   aiRecommendations,
@@ -28,7 +28,12 @@ export const aiRecommendationsRepository = {
     db
       .select()
       .from(aiRecommendations)
-      .where(sql`is_accepted = 0 AND is_declined = 0`),
+      .where(
+        and(
+          eq(aiRecommendations.isAccepted, false),
+          eq(aiRecommendations.isDeclined, false),
+        ),
+      ),
 
   /**
    * Returns all AI recommendations that have been accepted.
@@ -156,7 +161,7 @@ export const userRecommendationsRepository = {
   updateStatus: (id: number, status: RecommendationStatus) =>
     db
       .update(userRecommendations)
-      .set({ status, reviewedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ status, reviewedAt: sql`now()` })
       .where(eq(userRecommendations.id, id))
       .returning(),
 

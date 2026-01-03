@@ -5,14 +5,14 @@ import { RecommendationStatus } from "@/lib/db/schema";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; status: string } }
+  { params }: { params: Promise<{ id: string; status: string }> }
 ) {
   const auth = await requireAuth(request);
   if (!auth.isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, status } = params;
+  const { id, status } = await params;
   const numId = parseInt(id);
 
   try {
@@ -30,14 +30,14 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string; status: string }> }
 ) {
   const auth = await requireAuth(request);
   if (!auth.isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const numId = parseInt(id);
 
   try {

@@ -15,8 +15,6 @@ export const aiSettingsFormSchema = z.object({
   enableDiscovery: z.boolean(),
   refreshFrequency: z.enum(["on-demand", "daily", "weekly"]),
   maxSuggestions: z.number().min(1).max(50),
-  visionModel: z.string(),
-  chatModel: z.string(),
   autoApproveRecommendations: z.boolean(),
 })
 

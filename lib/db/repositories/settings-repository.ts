@@ -50,7 +50,7 @@ export const settingsRepository = {
           category,
           valueType,
           description,
-          updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER`,
+          updatedAt: sql`now()`,
         },
       })
       .returning(),
@@ -126,7 +126,7 @@ export const sessionsRepository = {
       .where(
         and(
           eq(sessions.token, token),
-          gte(sessions.expiresAt, sql`EXTRACT(EPOCH FROM NOW())::INTEGER`),
+          gte(sessions.expiresAt, sql`now()`),
         ),
       )
       .limit(1),
@@ -137,7 +137,7 @@ export const sessionsRepository = {
   updateLastActive: (token: string) =>
     db
       .update(sessions)
-      .set({ lastActive: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ lastActive: sql`now()` })
       .where(eq(sessions.token, token))
       .returning(),
 
@@ -153,7 +153,7 @@ export const sessionsRepository = {
   deleteExpired: () =>
     db
       .delete(sessions)
-      .where(lte(sessions.expiresAt, sql`EXTRACT(EPOCH FROM NOW())::INTEGER`))
+      .where(lte(sessions.expiresAt, sql`now()`))
       .returning(),
 
   /**

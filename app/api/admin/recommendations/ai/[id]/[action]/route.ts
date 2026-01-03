@@ -4,14 +4,14 @@ import { aiRecommendationsRepository } from "@/lib/db/repositories/recommendatio
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; action: string } }
+  { params }: { params: Promise<{ id: string; action: string }> }
 ) {
   const auth = await requireAuth(request);
   if (!auth.isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, action } = params;
+  const { id, action } = await params;
   const numId = parseInt(id);
 
   try {

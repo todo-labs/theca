@@ -1,6 +1,6 @@
 interface MetadataItem {
   label: string
-  value: string
+  value: React.ReactNode
   minWidth?: string
 }
 

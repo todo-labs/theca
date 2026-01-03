@@ -25,11 +25,11 @@ export function useCreateBook() {
 
 export function useFetchBookDetails() {
   return useMutation({
-    mutationFn: async ({ title, author }: { title: string; author: string }) => {
+    mutationFn: async (params: { query?: string; title?: string; author?: string }) => {
       const res = await fetch("/api/admin/books/fetch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, author }),
+        body: JSON.stringify(params),
       });
       if (!res.ok) throw new Error("Failed to fetch book details");
       return res.json();

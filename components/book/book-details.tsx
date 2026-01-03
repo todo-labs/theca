@@ -1,12 +1,15 @@
+"use client";
+
 import { BookMetadata } from "@/components/book/book-metadata";
+import { ExpandableDescription } from "@/components/ui/expandable-description";
 
 interface BookDetailsProps {
   title: React.ReactNode;
   author: string;
-  description: React.ReactNode;
+  description: string;
   metadata: {
     label: string;
-    value: string;
+    value: React.ReactNode;
     minWidth?: string;
   }[];
 }
@@ -29,9 +32,9 @@ export function BookDetails({
           </p>
         </div>
 
-        <div className="space-y-5 text-[13px] leading-[1.7] text-muted-foreground/85">
-          {description}
-        </div>
+        {description && (
+          <ExpandableDescription description={description} />
+        )}
 
         <div className="border-t border-border/30 my-6" />
 

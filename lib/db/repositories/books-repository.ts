@@ -53,7 +53,7 @@ export const bookRepository = {
   updateStatus: (id: number, status: ReadingStatus) =>
     db
       .update(books)
-      .set({ readingStatus: status, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ readingStatus: status, updatedAt: sql`now()` })
       .where(eq(books.id, id))
       .returning(),
 
@@ -63,7 +63,7 @@ export const bookRepository = {
   updateProgress: (id: number, currentPage: number) =>
     db
       .update(books)
-      .set({ currentPage, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ currentPage, updatedAt: sql`now()` })
       .where(eq(books.id, id))
       .returning(),
 
@@ -98,7 +98,7 @@ export const bookRepository = {
       .select()
       .from(books)
       .where(
-        sql`${books.title} LIKE ${"%" + query + "%"} OR ${books.author} LIKE ${"%" + query + "%"}`,
+        sql`${books.title} ILIKE ${"%" + query + "%"} OR ${books.author} ILIKE ${"%" + query + "%"}`,
       ),
 };
 
@@ -177,7 +177,7 @@ export const journalNotesRepository = {
   update: (id: number, data: Partial<NewJournalNote>) =>
     db
       .update(journalNotes)
-      .set({ ...data, updatedAt: sql`EXTRACT(EPOCH FROM NOW())::INTEGER` })
+      .set({ ...data, updatedAt: sql`now()` })
       .where(eq(journalNotes.id, id))
       .returning(),
 
